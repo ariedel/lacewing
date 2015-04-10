@@ -16,7 +16,7 @@ def fitellipse(x,y,z):
 
     meanx = numpy.average(x)
     meany = numpy.average(y)
-    meanz = numpy.average(z)
+    meanz = numpy.average(z)    outfile.write('\n')
     
     vec0 = numpy.asarray([x,y,z])
 

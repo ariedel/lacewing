@@ -3,8 +3,6 @@ import galpy
 from scipy import weave
 
 # Functions: 
-# isnumber: Determines if the object is a number
-# wstddev: Calculate weighted standard deviation
 
 # gal_uvwxyz: converts equatorial to galactic coordinates.
 # gal_rdpmuv: converts galactic coordinates into equatorial.
@@ -19,37 +17,6 @@ from scipy import weave
 # ballistic_uniform: the same as ballistic, but for uniformly distributed uncertainties rather than normally distributed uncertainties.
 # epicyclic_uniform: uniform monte carlo version of epicyclic 
 # potential_uniform: uniform monte carlo version of potential
-
-def isnumber(x):
-    #print type(x).__name__
-    result = False
-    if type(x).__name__ in ["str","string_"]:
-        try:
-            float(x)/2.0
-            result = True
-        except ValueError:
-            result = False
-    if type(x).__name__ in ["int", "int64", "long", "float", "float64", "double"]:
-        return True
-        
-    if type(x).__name__ in ["list","ndarray","Column","MaskedColumn"]:
-        result=[]
-        for i in xrange(len(x)):
-            #print x[i]
-            try:
-                if isinstance(x[i],numpy.ma.core.MaskedConstant):
-                    raise ValueError
-                float(x[i])/2. # should induce non-numbers to throw a 'ValueError'
-                result.append(True)
-            except ValueError,TypeError:
-                result.append(False)
-    return result
-
-# Weighted Standard Devation taken from http://stackoverflow.com/questions/2413522/weighted-standard-deviation-in-numpy
-def wstddev(x,w):
-    average = numpy.average(x,weights=w)
-    variance = numpy.dot(w,(x-average)**2)/w.sum()
-    return average,numpy.sqrt(variance)
 
 # from astrolibpy
 # AR 2013.0910: Fixed this script to run with vectors.  Mostly, I put back pieces of 
@@ -491,3 +458,4 @@ def gal_uvwxyz_weave(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmde
         w = w + lsr_vel[2]
    
     return (u,v,w,x,y,z)
+

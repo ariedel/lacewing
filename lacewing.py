@@ -2,10 +2,9 @@ import numpy
 import scipy
 from astropy.io import ascii
 from sys import argv
-import useful
-#import assochelper
 import kinematics
 import converge
+import astrometry
 
 ###################################
 ###################################
@@ -14,14 +13,18 @@ import converge
 ###################################
 
 ###################################
-### LACEwING 1.0
-### ARR 2015-01-19
+### LACEwING 1.1
+### ARR 2015-04-10
+### 1.0: Everything
+### 1.1: Removed dependence on GROUP columns in input data table
+###      Fixed dependency on astrometry module
+###      Default output should be a summary mode now
 ###################################
 
 try:
     infilename = argv[1]
 except IndexError: 
-    print 'syntax: python lacewing.py inputfile young=young outname=outfile rawgofs=percentage'
+    print 'syntax: python lacewing.py inputfile young=young outname=outfile verbose=verbose rawgofs=percentage'
 try:
     young = argv[2]
 except IndexError:
@@ -31,7 +34,11 @@ try:
 except IndexError:
     outfilename = 'lacewing.output'
 try:
-    percentages = argv[4]
+    verbose = argv[4]
+except IndexError:
+    verbose = 'quiet'
+try:
+    percentages = argv[5]
 except IndexError:
     percentages = 'percentage'
 
@@ -112,7 +119,12 @@ star = readtable.read(file)
 file.close()
 
 outfile = open(outfilename,'wb')
-outfile.write('lineno,Name,RA,DEC,pmRA,pmDEC,MGP,d1,sig,d2,sig_pm,pm_|_,exp_pm_|_,d3,sig_dist,dist,exp_dist,exp_edist,d4,sig_rv,rv,exp_rv,exp_erv,d5,sig_pos,mgp1,mgp2,mgp3,.\n')
+if verbose == "verbose":
+    # verbose output is one line per moving group per entry (14 lines per star) in CSV format
+    outfile.write('lineno,Name,RA,DEC,pmRA,pmDEC,MGP,d1,sig,d2,sig_pm,pm_|_,exp_pm_|_,d3,sig_dist,dist,exp_dist,exp_edist,d4,sig_rv,rv,exp_rv,exp_erv,d5,sig_pos,mgp1,mgp2,mgp3,.\n')
+else:
+    # regular output is a one line per entry summary, also in .csv form
+    outfile.write('Name,Group,Percent,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps_Cha,eta_Cha,TW_Hya,beta_Pic,Octans,Tuc-Hor,Columba,Argus,AB_Dor,Pleiades,Her-Lyr,Coma_Ber,Ursa_Major,Hyades\n')
 
 lineno = 1
 
@@ -124,13 +136,13 @@ for i in numpy.arange(0,len(star)):
         dec = float(star[i]['DEC'])
     except (ValueError,IndexError):
         try:
-            ra = useful.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = useful.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
+            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
+            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
             if star[i]['DECf'] == '-':
                 dec = dec * -1.0
         except ValueError:
-            ra = useful.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = useful.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm'])))
+            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
+            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm'])))
             if star[i]['DECf'] == '-':
                 dec = dec * -1.0
     try:
@@ -146,7 +158,7 @@ for i in numpy.arange(0,len(star)):
         epmra = numpy.float(star[i]['epmRA'])/1000.
         pmdec = numpy.float(star[i]['pmDEC'])/1000.
         epmdec = numpy.float(star[i]['epmDEC'])/1000.
-        pm,epm,pa,epa = useful.pmjoin(pmra,epmra,pmdec,epmdec)
+        pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
         pmexists = 1
     except ValueError:
       try:
@@ -154,7 +166,7 @@ for i in numpy.arange(0,len(star)):
           epmra = 0.01
           pmdec = numpy.float(star[i]['pmDEC'])/1000.
           epmdec = 0.01
-          pm,epm,pa,epa = useful.pmjoin(pmra,epmra,pmdec,epmdec)
+          pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
           pmexists = 1
       except ValueError:
           pmra = 999.99
@@ -180,13 +192,18 @@ for i in numpy.arange(0,len(star)):
     except (ValueError, IndexError):
         rvexists=0
 
-    mgp1 = star[i]['GROUP']
-    mgp2 = star[i]['GROUP1']
-    mgp3 = star[i]['GROUP quality']
-      
     print "{8:}  {0:09.5f} {1:7.5f}  {2:+09.5f} {3:7.5f}  {4:+9.5f} {5:8.5f}  {6:+9.5f} {7:8.5f}  {9:5.4f} {10:06.2f}".format(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,name,pm,pa)
 
     #print "Running Convergence"
+
+    # these lists will only be needed to save output for the regular summary.
+    if verbose != "verbose":
+        matchgroup = []
+        matchsig = []
+        matchdist = []
+        matchedist = []
+        matchrv = []
+        matcherv = []
 
     for i in range(len(moving_groups)):
         mgp = moving_groups[i]
@@ -299,7 +316,7 @@ for i in numpy.arange(0,len(star)):
 
         sig = converge.weightadd(sigma)
                         
-        print sig
+        #print sig
         if young == "young":
             coeff = mgp.coeff_young
         else:
@@ -359,21 +376,38 @@ for i in numpy.arange(0,len(star)):
          
             percent = percent * 100
         else:
+            # if percentage is set to anything other than "percentage", output the raw goodness-of-fit.
             percent = sig
-        if percent > 100:
-            percent = 100
       
 
         # remove spaces from name - helps with programming later on
         name = name.replace(' ', '_')
-        mgp1 = mgp1.replace(' ', '_')
-        mgp2 = mgp2.replace(' ', '_')
-        mgp3 = mgp3.replace(' ', '_')
         mgpname = mgp.name.replace(' ', '_')
 
-        print '{14:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:} {11:}, {12:}, {13:}'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,mgp1,mgp2,mgp3,lineno)
-        outfile.write('{14:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:} "{11:}", "{12:}", "{13:}", .\n'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,mgp1,mgp2,mgp3,lineno))
+        #print '{11:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:}'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,lineno)
+        # if verbose output has been selected, print our strings to a file here
+        if verbose == "verbose":
+            outfile.write('{11:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:}, .\n'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,lineno))
+        else:
+            # if regular output was selected, save the info for each moving group for consideration once they're all done.
+            matchgroup.append(mgpname)
+            matchsig.append(percent)
+            matchdist.append(exp_dist)
+            matchedist.append(exp_edist)
+            matchrv.append(exp_rv)
+            matcherv.append(exp_erv)
 
         lineno = lineno+1
+    # We've finished processing one star. If regular output was selected, create and print the output string.
+    if verbose != "verbose":
+        order = np.argsort(matchsig)[::-1]
+        # if even the best match isn't above the threshold of consideration:
+        if matchsig[order[0]] < 20:
+            outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name))
+        else:
+            outfile.write('{0:},{1:},{2: 5.2f},{3: 6.2f},{4: 5.2f},{5:+6.2f},{6: 5.2f},'.format(name,matchgroup[order[0]],matchsig[order[0]],matchdist[order[0]],matchedist[order[0]],matchrv[order[0]],matcherv[order[0]]))
+        for j in range(len(moving_groups)):
+            outfile.write('{0: 5.2f},'.format(lines[j]['sig']))
+        outfile.write('\n')
 
 outfile.close()
