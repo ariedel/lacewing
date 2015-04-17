@@ -3,13 +3,11 @@ import scipy
 from matplotlib import pyplot
 from matplotlib import cm
 from matplotlib.patches import Ellipse
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import font_manager
 from scipy.stats import norm
-import scipy.optimize as op
 import astropy.io.ascii as ascii
 from sys import argv
-import useful
+import astrometry
 import kinematics
 import ellipse
 
@@ -19,12 +17,12 @@ import ellipse
 ###################################
 ###################################
 
-prop = font_manager.FontProperties(fname='/home/riedel/Arial.ttf')
+#prop = font_manager.FontProperties(fname='/home/riedel/Arial.ttf')
 
 try:
     infilename = argv[1]
 except IndexError: 
-    print 'syntax: python lacewing.py inputfile XYZ outfile'
+    print 'syntax: python lacewing_slice.py inputfile XYZ outfile'
 try:
    XYZ = bool(argv[2])
 except IndexError:
@@ -76,19 +74,8 @@ class Mgp:
 
         self.color = [mgp["Red"],mgp["Green"],mgp["Blue"]]
 
-        self.coeff_all = [ [mgp['field_all_A'],mgp['field_all_S']],[mgp['field_pm_A'],mgp['field_pm_S']],[mgp['field_dist_A'],mgp['field_dist_S']],[mgp['field_rv_A'],mgp['field_rv_S']],[mgp['field_pmdist_A'],mgp['field_pmdist_S']],[mgp['field_pmrv_A'],mgp['field_pmrv_S']],[mgp['field_distrv_A'],mgp['field_distrv_S']]]
-        self.coeff_young = [ [mgp['young_all_A'],mgp['young_all_S']],[mgp['young_pm_A'],mgp['young_pm_S']],[mgp['young_dist_A'],mgp['young_dist_S']],[mgp['young_rv_A'],mgp['young_rv_S']],[mgp['young_pmdist_A'],mgp['young_pmdist_S']],[mgp['young_pmrv_A'],mgp['young_pmrv_S']],[mgp['young_distrv_A'],mgp['young_distrv_S']]]
-        for x in range(len(self.coeff_all)):
-            if kinematics.isnumber(self.coeff_all[x][0]):
-                self.coeff_all[x][0] = numpy.float(self.coeff_all[x][0])
-            if kinematics.isnumber(self.coeff_all[x][1]):
-                self.coeff_all[x][1] = numpy.float(self.coeff_all[x][1])
-        for x in range(len(self.coeff_young)):
-            if kinematics.isnumber(self.coeff_young[x][0]):
-                self.coeff_young[x][0] = numpy.float(self.coeff_young[x][0])
-            if kinematics.isnumber(self.coeff_young[x][1]):
-                self.coeff_young[x][1] = numpy.float(self.coeff_young[x][1])
-
+        self.coeff_all = [ [mgp['field_all_M'],mgp['field_all_S']],[mgp['field_pm_M'],mgp['field_pm_S']],[mgp['field_dist_M'],mgp['field_dist_S']],[mgp['field_rv_M'],mgp['field_rv_S']],[mgp['field_pmdist_M'],mgp['field_pmdist_S']],[mgp['field_pmrv_M'],mgp['field_pmrv_M']],[mgp['field_distrv_M'],mgp['field_distrv_S']]]
+        self.coeff_young = [ [mgp['young_all_M'],mgp['young_all_S']],[mgp['young_pm_M'],mgp['young_pm_S']],[mgp['young_dist_M'],mgp['young_dist_S']],[mgp['young_rv_M'],mgp['young_rv_S']],[mgp['young_pmdist_M'],mgp['young_pmdist_S']],[mgp['young_pmrv_M'],mgp['young_pmrv_S']],[mgp['young_distrv_M'],mgp['young_distrv_S']]]
 
 # read in ellipse parameters for associations
 
@@ -131,7 +118,7 @@ star = readtable.read(file)
 file.close()
 
 for i in numpy.arange(0,len(star)):
-    pilen = 1
+    distlen = 1
     rvlen = 1
     monte = 10000000
     
@@ -141,13 +128,13 @@ for i in numpy.arange(0,len(star)):
         dec = float(star[i]['DEC'])
     except ValueError:
         try:
-            ra = useful.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = useful.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
+            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
+            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
             if star[i]['DECf'] == '-':
                 dec = dec * -1.0
         except ValueError:
-            ra = useful.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = useful.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm'])))
+            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
+            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm'])))
             if star[i]['DECf'] == '-':
                 dec = dec * -1.0
 
@@ -164,7 +151,7 @@ for i in numpy.arange(0,len(star)):
         epmra = numpy.float(star[i]['epmRA'])/1000.
         pmdec = numpy.float(star[i]['pmDEC'])/1000.
         epmdec = numpy.float(star[i]['epmDEC'])/1000.
-        pm,epm,pa,epa = useful.pmjoin(pmra,epmra,pmdec,epmdec)
+        pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
         pmexists = 1
     except (IndexError,ValueError):
         try:
@@ -172,7 +159,7 @@ for i in numpy.arange(0,len(star)):
             epmra = 0.01
             pmdec = numpy.float(star[i]['pmDEC'])/1000.
             epmdec = 0.01
-            pm,epm,pa,epa = useful.pmjoin(pmra,epmra,pmdec,epmdec)
+            pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
             pmexists = 1
         except (IndexError,ValueError):
             pmexists = 0
@@ -207,13 +194,13 @@ for i in numpy.arange(0,len(star)):
         monte = monte/100
         
     print "{8:}  {0:09.5f} {1:7.5f}  {2:+09.5f} {3:7.5f}  {4:+9.5f} {5:8.5f}  {6:+9.5f} {7:8.5f}  {9:5.4f} {10:06.2f}".format(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,name,pm,pa)
-    result = numpy.zeros((pilen,rvlen,18))
+    result = numpy.zeros((distlen,rvlen,18))
     #print len(result)
 
     #print dist,edist
     #print monte,distlen,rvlen
 
-    print distlen,rvlen
+    print distlen,rvlen,result.shape
     for j in xrange(distlen):
         for k in xrange(rvlen):
             tra = ra + numpy.random.randn(monte)*era/numpy.cos(dec*numpy.pi/180)
@@ -303,43 +290,43 @@ for i in numpy.arange(0,len(star)):
         ax1 = fig.add_subplot(131, aspect='equal')
         ax2 = fig.add_subplot(132, aspect='equal')
         ax3 = fig.add_subplot(133, aspect='equal')
-    ax1.set_xlabel('U (km s$^{-1}$)',fontproperties=prop)
-    ax1.set_ylabel('V (km s$^{-1}$)',fontproperties=prop)
+    ax1.set_xlabel('U (km s$^{-1}$)')#,fontproperties=prop)
+    ax1.set_ylabel('V (km s$^{-1}$)')#,fontproperties=prop)
     ax1.set_xlim(-25,20)
     ax1.set_ylim(-30,5)
-    ax1.set_xticklabels(numpy.asarray(ax1.get_xticks(),dtype=numpy.int),fontproperties=prop)
-    ax1.set_yticklabels(numpy.asarray(ax1.get_yticks(),dtype=numpy.int),fontproperties=prop)
-    ax2.set_xlabel('U (km s$^{-1}$)',fontproperties=prop)
-    ax2.set_ylabel('W (km s$^{-1}$)',fontproperties=prop)
+    ax1.set_xticklabels(numpy.asarray(ax1.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+    ax1.set_yticklabels(numpy.asarray(ax1.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
+    ax2.set_xlabel('U (km s$^{-1}$)')#,fontproperties=prop)
+    ax2.set_ylabel('W (km s$^{-1}$)')#,fontproperties=prop)
     ax2.set_xlim(-25,20)
     ax2.set_ylim(-25,10)
-    ax2.set_xticklabels(numpy.asarray(ax2.get_xticks(),dtype=numpy.int),fontproperties=prop)
-    ax2.set_yticklabels(numpy.asarray(ax2.get_yticks(),dtype=numpy.int),fontproperties=prop)
-    ax3.set_xlabel('V (km s$^{-1}$)',fontproperties=prop)
-    ax3.set_ylabel('W (km s$^{-1}$)',fontproperties=prop)
+    ax2.set_xticklabels(numpy.asarray(ax2.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+    ax2.set_yticklabels(numpy.asarray(ax2.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
+    ax3.set_xlabel('V (km s$^{-1}$)')#,fontproperties=prop)
+    ax3.set_ylabel('W (km s$^{-1}$)')#,fontproperties=prop)
     ax3.set_xlim(-35,10)
     ax3.set_ylim(-20,15)
-    ax3.set_xticklabels(numpy.asarray(ax3.get_xticks(),dtype=numpy.int),fontproperties=prop)
-    ax3.set_yticklabels(numpy.asarray(ax3.get_yticks(),dtype=numpy.int),fontproperties=prop)
+    ax3.set_xticklabels(numpy.asarray(ax3.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+    ax3.set_yticklabels(numpy.asarray(ax3.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
     if XYZ:
-        ax4.set_xlabel('X (pc)',fontproperties=prop)
-        ax4.set_ylabel('Y (pc)',fontproperties=prop)
+        ax4.set_xlabel('X (pc)')#,fontproperties=prop)
+        ax4.set_ylabel('Y (pc)')#,fontproperties=prop)
         ax4.set_xlim(-150,100)
         ax4.set_ylim(-150,50)
-        ax4.set_xticklabels(numpy.asarray(ax4.get_xticks(),dtype=numpy.int),fontproperties=prop)
-        ax4.set_yticklabels(numpy.asarray(ax4.get_yticks(),dtype=numpy.int),fontproperties=prop)
-        ax5.set_xlabel('X (pc)',fontproperties=prop)
-        ax5.set_ylabel('Z (pc)',fontproperties=prop)
+        ax4.set_xticklabels(numpy.asarray(ax4.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+        ax4.set_yticklabels(numpy.asarray(ax4.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
+        ax5.set_xlabel('X (pc)')#,fontproperties=prop)
+        ax5.set_ylabel('Z (pc)')#,fontproperties=prop)
         ax5.set_xlim(-150,100)
         ax5.set_ylim(-100,100)
-        ax5.set_xticklabels(numpy.asarray(ax5.get_xticks(),dtype=numpy.int),fontproperties=prop)
-        ax5.set_yticklabels(numpy.asarray(ax5.get_yticks(),dtype=numpy.int),fontproperties=prop)
-        ax6.set_xlabel('Y (pc)',fontproperties=prop)
-        ax6.set_ylabel('Z (pc)',fontproperties=prop)
+        ax5.set_xticklabels(numpy.asarray(ax5.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+        ax5.set_yticklabels(numpy.asarray(ax5.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
+        ax6.set_xlabel('Y (pc)')#,fontproperties=prop)
+        ax6.set_ylabel('Z (pc)')#,fontproperties=prop)
         ax6.set_xlim(-150,100)
         ax6.set_ylim(-100,100)
-        ax6.set_xticklabels(numpy.asarray(ax6.get_xticks(),dtype=numpy.int),fontproperties=prop)
-        ax6.set_yticklabels(numpy.asarray(ax6.get_yticks(),dtype=numpy.int),fontproperties=prop)
+        ax6.set_xticklabels(numpy.asarray(ax6.get_xticks(),dtype=numpy.int))#,fontproperties=prop)
+        ax6.set_yticklabels(numpy.asarray(ax6.get_yticks(),dtype=numpy.int))#,fontproperties=prop)
     
     a = 0
     for i in range(len(moving_groups)):
@@ -375,7 +362,7 @@ for i in numpy.arange(0,len(star)):
             assocellipse6.set_clip_box(ax6.bbox)
             assocellipse6.set_facecolor(moving_groups[i].color)	
             
-        ax2.text(5,8+a*-2.5,moving_groups[i].name,fontproperties=prop,color=moving_groups[i].color)
+        ax2.text(5,8+a*-2.5,moving_groups[i].name,color=moving_groups[i].color)#,fontproperties=prop)
         a=a+1
 
     for n in xrange(rvlen):

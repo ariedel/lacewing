@@ -69,14 +69,14 @@ class Mgp:
         self.coeff_all = [ [mgp['field_all_M'],mgp['field_all_S']],[mgp['field_pm_M'],mgp['field_pm_S']],[mgp['field_dist_M'],mgp['field_dist_S']],[mgp['field_rv_M'],mgp['field_rv_S']],[mgp['field_pmdist_M'],mgp['field_pmdist_S']],[mgp['field_pmrv_M'],mgp['field_pmrv_S']],[mgp['field_distrv_M'],mgp['field_distrv_S']]]
         self.coeff_young = [ [mgp['young_all_M'],mgp['young_all_S']],[mgp['young_pm_M'],mgp['young_pm_S']],[mgp['young_dist_M'],mgp['young_dist_S']],[mgp['young_rv_M'],mgp['young_rv_S']],[mgp['young_pmdist_M'],mgp['young_pmdist_S']],[mgp['young_pmrv_M'],mgp['young_pmrv_S']],[mgp['young_distrv_M'],mgp['young_distrv_S']]]
         for x in range(len(self.coeff_all)):
-            if kinematics.isnumber(self.coeff_all[x][0]):
+            if astrometry.isnumber(self.coeff_all[x][0]):
                 self.coeff_all[x][0] = numpy.float(self.coeff_all[x][0])
-            if kinematics.isnumber(self.coeff_all[x][1]):
+            if astrometry.isnumber(self.coeff_all[x][1]):
                 self.coeff_all[x][1] = numpy.float(self.coeff_all[x][1])
         for x in range(len(self.coeff_young)):
-            if kinematics.isnumber(self.coeff_young[x][0]):
+            if astrometry.isnumber(self.coeff_young[x][0]):
                 self.coeff_young[x][0] = numpy.float(self.coeff_young[x][0])
-            if kinematics.isnumber(self.coeff_young[x][1]):
+            if astrometry.isnumber(self.coeff_young[x][1]):
                 self.coeff_young[x][1] = numpy.float(self.coeff_young[x][1])
 
 # read in ellipse parameters for associations
@@ -322,32 +322,32 @@ for i in numpy.arange(0,len(star)):
         else:
             coeff = mgp.coeff_all
 
-        #print coeff[0][0],kinematics.isnumber(coeff[0][0])
+        #print coeff[0][0],astrometry.isnumber(coeff[0][0])
         percent = 0
         if percentages == 'percentage':
             if pmexists == 1:
                 if distexists == 1:
                     if rvexists == 1:
-                        if numpy.logical_not(kinematics.isnumber(coeff[0][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[0][0])):
                             if sig < coeff[0][1]:
                                 percent = 1
                         else:
                             percent = converge.gauscdf(sig,coeff[0][0],coeff[0][1])
                     else:
-                        if numpy.logical_not(kinematics.isnumber(coeff[4][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[4][0])):
                             if sig < coeff[4][1]:
                                 percent = 1
                         else:
                             percent = converge.gauscdf(sig,coeff[4][0],coeff[4][1])
                 else:
                     if rvexists == 1:
-                        if numpy.logical_not(kinematics.isnumber(coeff[5][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[5][0])):
                             if sig < coeff[5][1]:
                                 percent = 1
                         else:
                             percent = converge.gauscdf(sig,coeff[5][0],coeff[5][1])
                     else:
-                        if numpy.logical_not(kinematics.isnumber(coeff[1][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[1][0])):
                             if sig < coeff[1][1]:
                                 percent = 1
                         else:
@@ -355,20 +355,20 @@ for i in numpy.arange(0,len(star)):
             else:
                 if distexists == 1:
                     if rvexists == 1:
-                        if numpy.logical_not(kinematics.isnumber(coeff[6][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[6][0])):
                             if sig < coeff[6][1]:
                                 percent = 1
                         else:
                             percent = converge.gauscdf(sig,coeff[6][0],coeff[6][1])
                     else:
-                        if numpy.logical_not(kinematics.isnumber(coeff[2][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[2][0])):
                             if sig < coeff[2][1]:
                                 percent = 1
                         else:
                             percent = converge.gauscdf(sig,coeff[2][0],coeff[2][1])
                 else:
                     if rvexists == 1:
-                        if numpy.logical_not(kinematics.isnumber(coeff[3][0])):
+                        if numpy.logical_not(astrometry.isnumber(coeff[3][0])):
                             if sig < coeff[3][1]:
                                 percent = 1
                         else:
@@ -400,14 +400,14 @@ for i in numpy.arange(0,len(star)):
         lineno = lineno+1
     # We've finished processing one star. If regular output was selected, create and print the output string.
     if verbose != "verbose":
-        order = np.argsort(matchsig)[::-1]
+        order = numpy.argsort(matchsig)[::-1]
         # if even the best match isn't above the threshold of consideration:
         if matchsig[order[0]] < 20:
             outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name))
         else:
             outfile.write('{0:},{1:},{2: 5.2f},{3: 6.2f},{4: 5.2f},{5:+6.2f},{6: 5.2f},'.format(name,matchgroup[order[0]],matchsig[order[0]],matchdist[order[0]],matchedist[order[0]],matchrv[order[0]],matcherv[order[0]]))
         for j in range(len(moving_groups)):
-            outfile.write('{0: 5.2f},'.format(lines[j]['sig']))
+            outfile.write('{0: 5.2f},'.format(matchsig[j]))
         outfile.write('\n')
 
 outfile.close()
