@@ -32,7 +32,7 @@ except IndexError:
 try:
     outfilename = argv[3]
 except IndexError:
-    outfilename = 'lacewing.output'
+    outfilename = 'lacewing_output.csv'
 try:
     verbose = argv[4]
 except IndexError:
@@ -113,8 +113,8 @@ file = open(infilename,'rb')
 readtable = ascii.get_reader(Reader=ascii.Basic)
 readtable.header.splitter.delimiter = ','
 readtable.data.splitter.delimiter = ','
-readtable.header.start_line = 1
-readtable.data.start_line = 3
+readtable.header.start_line = 0
+readtable.data.start_line = 1
 star = readtable.read(file)
 file.close()
 
