@@ -1,5 +1,5 @@
 import numpy
-import galpy
+#import galpy
 from scipy import weave
 
 # Functions: 
@@ -270,25 +270,25 @@ def epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan
 
    return px,py,pz
 
-def potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   galacticpotential = galpy.potential.MWPotential2014()
-   times = numpy.arange(0,timespan,timestep)
-
-   for j in xrange(n_int):
-      bra = ra + numpy.random.randn()*era
-      bdec = dec + numpy.random.randn()*edec
-      bdist = dist + numpy.random.randn()*edist
-      bpmra = pmra + numpy.random.randn()*epmra
-      bpmdec = pmdec + numpy.random.randn()*epmdec
-      brv = rv + numpy.random.randn()*erv
-      
-      orbit = galpy.orbit.Orbit(vxvv=[bra,bdec,bdist/1000,bpmra,bpmdec,brv],radec=True)
-      # integrate the orbit
-      orbit.integrate(times,galacticpotential)
-      # get the orbit
-      orbitresult = orbit.getorbit()
-
-   return px,py,pz
+#def potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
+#   galacticpotential = galpy.potential.MWPotential2014()
+#   times = numpy.arange(0,timespan,timestep)
+#
+#   for j in xrange(n_int):
+#      bra = ra + numpy.random.randn()*era
+#      bdec = dec + numpy.random.randn()*edec
+#      bdist = dist + numpy.random.randn()*edist
+#      bpmra = pmra + numpy.random.randn()*epmra
+#      bpmdec = pmdec + numpy.random.randn()*epmdec
+#      brv = rv + numpy.random.randn()*erv
+#      
+#      orbit = galpy.orbit.Orbit(vxvv=[bra,bdec,bdist/1000,bpmra,bpmdec,brv],radec=True)
+#      # integrate the orbit
+#      orbit.integrate(times,galacticpotential)
+#      # get the orbit
+#      orbitresult = orbit.getorbit()
+#
+#   return px,py,pz
 
 def random():
     return (numpy.random.rand()*2)-1
@@ -351,111 +351,111 @@ def epicyclic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
 
    return px,py,pz
 
-def potential_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   galacticpotential = galpy.potential.MWPotential2014()
-   times = numpy.arange(0,timespan,timestep)
+#def potential_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
+#   galacticpotential = galpy.potential.MWPotential2014()
+#   times = numpy.arange(0,timespan,timestep)
+#
+#   for j in xrange(n_int):
+#      bra = ra + random()*era
+#      bdec = dec + random()*edec
+#      bdist = dist + random()*edist
+#      bpmra = pmra + random()*epmra
+#      bpmdec = pmdec + random()*epmdec
+#      brv = rv + random()*erv
+#      
+#      orbit = galpy.orbit.Orbit(vxvv=[bra,bdec,bdist/1000,bpmra,bpmdec,brv],radec=True)
+#      # integrate the orbit
+#      orbit.integrate(times,galacticpotential)
+#      # get the orbit
+#      orbitresult = orbit.getorbit()
+#
+#   return px,py,pz
 
-   for j in xrange(n_int):
-      bra = ra + random()*era
-      bdec = dec + random()*edec
-      bdist = dist + random()*edist
-      bpmra = pmra + random()*epmra
-      bpmdec = pmdec + random()*epmdec
-      brv = rv + random()*erv
-      
-      orbit = galpy.orbit.Orbit(vxvv=[bra,bdec,bdist/1000,bpmra,bpmdec,brv],radec=True)
-      # integrate the orbit
-      orbit.integrate(times,galacticpotential)
-      # get the orbit
-      orbitresult = orbit.getorbit()
-
-   return px,py,pz
-
-# from astrolibpy
-# AR 2013.0910: Fixed this script to run with vectors.  Mostly, I put back pieces of 
-# http://code.google.com/p/astrolibpy/source/browse/astrolib/gal_uvw.py
-# from whence the original translation comes.
-def gal_uvwxyz_weave(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None, vrad=None, plx=None):
-    n_params = 3
-   
-    if n_params == 0:  
-        print 'Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD='
-        print '                  Distance=, PLX='
-        print '         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions'
-        return None
-   
-    if ra is None or dec is None:  
-        raise Exception('ERROR - The RA, Dec (J2000) position keywords must be supplied (degrees)')
-    if plx is None and distance is None:
-        raise Exception('ERROR - Either a parallax or distance must be specified')
-    if distance is not None:
-        if numpy.any(distance==0):
-            raise Exception('ERROR - All distances must be > 0')
-        plx = 1 / distance          #Parallax in arcseconds
-    if plx is not None and numpy.any(plx==0):
-        raise Exception('ERROR - Parallaxes must be > 0')
-
-    length = len(ra)
-    u = numpy.zeros(length)
-    v = numpy.zeros(length)
-    w = numpy.zeros(length)
-    x = numpy.zeros(length)
-    y = numpy.zeros(length)
-    z = numpy.zeros(length)
-    uvwxyz = numpy.zeros((6,length))
-
-    support = "#include <math.h>"
-    code = """
-   
-    double k = 4.74047;
-    double a_g00 = -0.0548755604;
-    double a_g01 = +0.4941094279;
-    double a_g02 = -0.8676661490;
-    double a_g10 = -0.8734370902;
-    double a_g11 = -0.4448296300;
-    double a_g12 = -0.1980763734;
-    double a_g20 = -0.4838350155;
-    double a_g21 = +0.7469822445;
-    double a_g22 = +0.4559837762;
-
-    //PyArrayObject* uvwxyz((6,length));
-    //double uvwxyz [6][length];
-
-    for(int i = 0; i < length; i++){
-       double cosd = cos(dec[i]*3.1415926535/180.0);
-       double sind = sin(dec[i]*3.1415926535/180.0);
-       double cosa = cos(ra[i]*3.1415926535/180.0);
-       double sina = sin(ra[i]*3.1415926535/180.0);
-
-       double pos1 = cosd*cosa;
-       double pos2 = cosd*sina;
-       double pos3 = sind;
-
-       uvwxyz[3][i] = 1/plx[i] * (a_g00 * pos1 + a_g10 * pos2 + a_g20 * pos3);
-       uvwxyz(4,i) = 1/plx[i] * (a_g01 * pos1 + a_g11 * pos2 + a_g21 * pos3);
-       uvwxyz(5,i) = 1/plx[i] * (a_g02 * pos1 + a_g12 * pos2 + a_g22 * pos3);
-
-       double vec1 = vrad[i];
-       double vec2 = k * pmra[i] / plx[i];
-       double vec3 = k * pmdec[i] / plx[i];
-
-       uvwxyz[0][i] = (a_g00 * cosa * cosd + a_g10 * sina * cosd + a_g20 * sind) * vec1 + (-a_g00 * sina + a_g10 * cosa) * vec2 + (-a_g00 * cosa * sind - a_g10 * sina * sind + a_g20 * cosd) * vec3;
-       uvwxyz[1][i] = (a_g01 * cosa * cosd + a_g11 * sina * cosd + a_g21 * sind) * vec1 + (-a_g01 * sina + a_g11 * cosa) * vec2 + (-a_g01 * cosa * sind - a_g11 * sina * sind + a_g21 * cosd) * vec3;
-       uvwxyz[2][i] = (a_g02 * cosa * cosd + a_g12 * sina * cosd + a_g22 * sind) * vec1 + (-a_g02 * sina + a_g12 * cosa) * vec2 + (-a_g02 * cosa * sind - a_g12 * sina * sind + a_g22 * cosd) * vec3;
-
-    return_val = uvwxyz;
-    }
-
-    
-    """
-    result = weave.inline(code, ['ra','dec','plx','pmra','pmdec','vrad','length','uvwxyz'], support_code = support, libraries = ['m'],type_factories = blitz_type_factories)
-    print result
-
-    lsr_vel = numpy.array([8.5, 13.38, 6.49])
-    if (lsr is not None):  
-        u = u + lsr_vel[0]
-        v = v + lsr_vel[1]
-        w = w + lsr_vel[2]
-   
-    return (u,v,w,x,y,z)
+## from astrolibpy
+## AR 2013.0910: Fixed this script to run with vectors.  Mostly, I put back pieces of 
+## http://code.google.com/p/astrolibpy/source/browse/astrolib/gal_uvw.py
+## from whence the original translation comes.
+#def gal_uvwxyz_weave(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None, vrad=None, plx=None):
+#    n_params = 3
+#   
+#    if n_params == 0:  
+#        print 'Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD='
+#        print '                  Distance=, PLX='
+#        print '         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions'
+#        return None
+#   
+#    if ra is None or dec is None:  
+#        raise Exception('ERROR - The RA, Dec (J2000) position keywords must be supplied (degrees)')
+#    if plx is None and distance is None:
+#        raise Exception('ERROR - Either a parallax or distance must be specified')
+#    if distance is not None:
+#        if numpy.any(distance==0):
+#            raise Exception('ERROR - All distances must be > 0')
+#        plx = 1 / distance          #Parallax in arcseconds
+#    if plx is not None and numpy.any(plx==0):
+#        raise Exception('ERROR - Parallaxes must be > 0')
+#
+#    length = len(ra)
+#    u = numpy.zeros(length)
+#    v = numpy.zeros(length)
+#    w = numpy.zeros(length)
+#    x = numpy.zeros(length)
+#    y = numpy.zeros(length)
+#    z = numpy.zeros(length)
+#    uvwxyz = numpy.zeros((6,length))
+#
+#    support = "#include <math.h>"
+#    code = """
+#   
+#    double k = 4.74047;
+#    double a_g00 = -0.0548755604;
+#    double a_g01 = +0.4941094279;
+#    double a_g02 = -0.8676661490;
+#    double a_g10 = -0.8734370902;
+#    double a_g11 = -0.4448296300;
+#    double a_g12 = -0.1980763734;
+#    double a_g20 = -0.4838350155;
+#    double a_g21 = +0.7469822445;
+#    double a_g22 = +0.4559837762;
+#
+#    //PyArrayObject* uvwxyz((6,length));
+#    //double uvwxyz [6][length];
+#
+#    for(int i = 0; i < length; i++){
+#       double cosd = cos(dec[i]*3.1415926535/180.0);
+#       double sind = sin(dec[i]*3.1415926535/180.0);
+#       double cosa = cos(ra[i]*3.1415926535/180.0);
+#       double sina = sin(ra[i]*3.1415926535/180.0);
+#
+#       double pos1 = cosd*cosa;
+#       double pos2 = cosd*sina;
+#       double pos3 = sind;
+#
+#       uvwxyz[3][i] = 1/plx[i] * (a_g00 * pos1 + a_g10 * pos2 + a_g20 * pos3);
+#       uvwxyz(4,i) = 1/plx[i] * (a_g01 * pos1 + a_g11 * pos2 + a_g21 * pos3);
+#       uvwxyz(5,i) = 1/plx[i] * (a_g02 * pos1 + a_g12 * pos2 + a_g22 * pos3);
+#
+#       double vec1 = vrad[i];
+#       double vec2 = k * pmra[i] / plx[i];
+#       double vec3 = k * pmdec[i] / plx[i];
+#
+#       uvwxyz[0][i] = (a_g00 * cosa * cosd + a_g10 * sina * cosd + a_g20 * sind) * vec1 + (-a_g00 * sina + a_g10 * cosa) * vec2 + (-a_g00 * cosa * sind - a_g10 * sina * sind + a_g20 * cosd) * vec3;
+#       uvwxyz[1][i] = (a_g01 * cosa * cosd + a_g11 * sina * cosd + a_g21 * sind) * vec1 + (-a_g01 * sina + a_g11 * cosa) * vec2 + (-a_g01 * cosa * sind - a_g11 * sina * sind + a_g21 * cosd) * vec3;
+#       uvwxyz[2][i] = (a_g02 * cosa * cosd + a_g12 * sina * cosd + a_g22 * sind) * vec1 + (-a_g02 * sina + a_g12 * cosa) * vec2 + (-a_g02 * cosa * sind - a_g12 * sina * sind + a_g22 * cosd) * vec3;
+#
+#    return_val = uvwxyz;
+#    }
+#
+#    
+#    """
+#    result = weave.inline(code, ['ra','dec','plx','pmra','pmdec','vrad','length','uvwxyz'], support_code = support, libraries = ['m'],type_factories = blitz_type_factories)
+#    print result
+#
+#    lsr_vel = numpy.array([8.5, 13.38, 6.49])
+#    if (lsr is not None):  
+#        u = u + lsr_vel[0]
+#        v = v + lsr_vel[1]
+#        w = w + lsr_vel[2]
+#   
+#    return (u,v,w,x,y,z)
 
