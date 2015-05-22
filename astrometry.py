@@ -55,6 +55,11 @@ def meanpi(pi,epi,fpi):
     return wpi,ewpi
 
 # Astrometry routines
+def sixty(x):
+    hour = int(x)
+    minute = int((x - hour)*60.0)
+    second = (((x - hour)*60.0)-minute)*60.0
+    return hour,abs(minute),abs(second)
 
 def ten(x):
     #x = [x]
