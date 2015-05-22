@@ -3,10 +3,24 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot
 #from matplotlib import cm
 from matplotlib.patches import Ellipse
+from matplotlib.patches import Polygon
+from matplotlib import patches
+from matplotlib import _png
 import kinematics
 import ellipse
+import astrometry
 import sys
 from astropy.io import ascii
+
+# Normally, matplotlib just builds up a list of plot elements until you 
+#  call savefig(), when it renders them all at once. That uses a LOT 
+#  of memory. This function replaces savefig() with something that plots
+#  every element as it comes in.
+def save(fig,filename):
+    #We have to work around 'fig.canvas.print_png', etc calling 'draw'
+    renderer = fig.canvas.renderer
+    with open(filename,'w') as outfile:
+        _png.write_png(renderer._renderer.buffer_rgba(),renderer.width,renderer.height,outfile,fig.dpi)
 
 def traceback(argv=None):
     if argv is None:
@@ -14,10 +28,11 @@ def traceback(argv=None):
         
     mgpname = argv[2]
     method = argv[3]
+    mgpage = numpy.float(argv[4])
 
-    timespan = -500
+    timespan = numpy.float(argv[5])
     timestep = -0.1
-    n_int = 2500
+    n_int = 4000
    
     readtable = ascii.get_reader(Reader=ascii.Basic)
     readtable.header.splitter.delimiter = ','
@@ -30,15 +45,15 @@ def traceback(argv=None):
     # How many stars are we fitting? Find all that are bona fide members (quality is "Good")
     n_stars=0
 
-    n_stars = len(numpy.where(numpy.bitwise_and(kinematics.isnumber(young['rv']),kinematics.isnumber(young['pi'])) & (young['GROUP'] == mgpname) & (young['GROUP quality'] == "Good"))[0])
+    n_stars = len(numpy.where(numpy.bitwise_and(astrometry.isnumber(young['rv']),astrometry.isnumber(young['pi'])) & (young['GROUP'] == mgpname) & (young['GROUP quality'] == "Good"))[0])
 
     print n_stars
 
     # it saves time and memory to make arrays in advance, even in python
     # Set dtype=numpy.float32 to save memory
-    mgp_x = numpy.zeros((n_stars,n_int,timespan/timestep),dtype=numpy.float32)
-    mgp_y = numpy.zeros((n_stars,n_int,timespan/timestep),dtype=numpy.float32)
-    mgp_z = numpy.zeros((n_stars,n_int,timespan/timestep),dtype=numpy.float32)
+    mgp_x = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
+    mgp_y = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
+    mgp_z = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
     # These are for the 3D movie version
     mgp_size = []
     mgp_color = []
@@ -145,11 +160,11 @@ def traceback(argv=None):
                     ###############################################################
                     
                     if method == 'ballistic':
-                        px,py,pz = kinematics.ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int)
+                        px,py,pz = kinematics.ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
                     elif method == 'epicyclic':
-                        px,py,pz = kinematics.epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int)
+                        px,py,pz = kinematics.epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
                     elif method == 'potential':
-                        px,py,pz = kinematics.potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int)
+                        px,py,pz = kinematics.potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
                     # store these iterations
                     mgp_x[n] = px
                     mgp_y[n] = py
@@ -173,7 +188,7 @@ def traceback(argv=None):
     mgp_x = numpy.asarray(mgp_x,dtype=numpy.float32)
     mgp_y = numpy.asarray(mgp_y,dtype=numpy.float32)
     mgp_z = numpy.asarray(mgp_z,dtype=numpy.float32)
-    times = numpy.arange(0,timespan,timestep)
+    times = numpy.arange(0,-600,timestep)
     ## output positions of individual stars as a function of time.
     #for s in range(len(times)):
     #    outfile = open("mgp_{0:}_{1:}_{2:}.csv".format(mgpname,method,times[s]),"wb")
@@ -226,9 +241,9 @@ def traceback(argv=None):
     #####################################################
 
     # flatten by one dimension; we now have N*I stars at every time T.
-    mgp_x = numpy.reshape(mgp_x,(n_stars*n_int,int(timespan/timestep)))
-    mgp_y = numpy.reshape(mgp_y,(n_stars*n_int,int(timespan/timestep)))
-    mgp_z = numpy.reshape(mgp_z,(n_stars*n_int,int(timespan/timestep)))
+    mgp_x = numpy.reshape(mgp_x,(n_stars*n_int,6000))
+    mgp_y = numpy.reshape(mgp_y,(n_stars*n_int,6000))
+    mgp_z = numpy.reshape(mgp_z,(n_stars*n_int,6000))
     
     # rotate so that each strip contains n_stars*n_int elements for a given time.
     # (it's easier to plot)
@@ -245,11 +260,20 @@ def traceback(argv=None):
     ###             "waterfall diagram"                 ###
     #######################################################
 
-    fig2 = pyplot.figure(figsize=(9.6,5.4))
+    fig2 = pyplot.figure(figsize=(9.6,5.4),dpi=200)
     ax2 = fig2.add_subplot(111)
-    ax2.set_xlabel('Time (Myr ago)')
-    ax2.set_ylabel('Distance from center (pc)')
-    ax2.set_title('{0:} {1:} traceback'.format(mgpname,method))
+    ax2.set_ylim((0,300))
+    ax2.set_xlim((0,timespan))
+    ax2.set_xlabel('Time (Myr)')
+    ax2.set_ylabel('(pc)')
+
+    fig2.canvas.draw()
+
+    line = ax2.plot([0,1],[0,1],color=(1,1,1,0.1),linewidth=1)
+    line = line[0]
+    poly = ax2.add_patch(patches.Polygon([[0,1],[1,2],[2,0]],closed=True,facecolor=(1,1,1,0.15), edgecolor='none'))
+
+    #ax2.set_title('{0:} {1:} traceback'.format(mgpname,method))
     a = []
     b = []
     c = []
@@ -269,54 +293,71 @@ def traceback(argv=None):
     x = numpy.asarray(x)
     y = numpy.asarray(y)
     z = numpy.asarray(z)
-    for p in range(n_stars*n_int):
+    for p in numpy.arange(0,n_stars*n_int,3):
         mgpdist = numpy.sqrt((mgp_x[:,p] - x)**2 + (mgp_y[:,p] - y)**2 + (mgp_z[:,p] - z)**2)
-        ax2.plot(times,mgpdist,alpha=0.01,color='k')
-    ax2.plot(times,(a*b*c)**(1/3.),color="#FF0000")
-    ax2.set_ylim((0,200))
-    ax2.set_xlim((0,times[-1]))
-    fig2.savefig('Trace_{0:}_{1:}.png'.format(mgpname,method),dpi=200)
+        line.set_data(times,mgpdist)
+        line.set_linewidth(0.2)
+        line.set_color((0,0,0,0.05))
+        ax2.draw_artist(line)
+    line.set_data(times,(a*b*c)**(1/3.))
+    line.set_color((1,0,0,1))
+    line.set_linewidth(1)
+    ax2.draw_artist(line)
+
+    x = numpy.concatenate((times,times[::-1],[times[0]]))
+        
+    mgprad = (a*b*c)**(1/3.)
+    mg = numpy.concatenate((mgprad,numpy.zeros_like(mgprad),[mgprad[0]]))
+    poly.set_xy(zip(*(x,mg)))
+    poly.set_facecolor((1,0,0,0.2))
+    ax2.draw_artist(poly)
+
+    line.set_data([mgpage,mgpage],[0,500])
+    line.set_color((1,0,0,1))
+    line.set_linewidth(1)
+    ax2.draw_artist(line)
+    save(fig2,'Trace_{0:}_{1:}_tall.png'.format(mgpname,method))
     fig2.clf()
     pyplot.close()
 
-    #####################################################
-    ### The 3D plot. We're going to plot all of the   ###
-    ###  iterations of the moving group so we can see ###
-    ###  the full effect. Also, it looks like an      ###
-    ###  explosion, and that's always cool.           ###
-    #####################################################
-    
-    print mgp_x[0]   
-    for k in xrange(len(times)):
-        print times[k]
-        fig = pyplot.figure(figsize=(9.6,5.5))
-        ax = fig.add_subplot(111,projection='3d', aspect='equal')
-
-        mgp_tx,mgp_ty,mgp_tz = ellipse.triaxial(mgpmaster[k])
-
-        #Add the Sun
-        #ax.scatter(0-mgpmaster[k]['x'],0-mgpmaster[k]['y'],0-mgpmaster[k]['z'],s=50,color="#FFCF00")
-
-        ax.scatter(mgp_x[k]-mgpmaster[k]['x'],mgp_y[k]-mgpmaster[k]['y'],mgp_z[k]-mgpmaster[k]['z'],c=mgp_color,s=1,linewidth=0.02,alpha=0.5)
-        ax.plot_surface(mgp_tx-mgpmaster[k]['x'],mgp_ty-mgpmaster[k]['y'],mgp_tz-mgpmaster[k]['z'],rstride=4,cstride=4,color="#000000",alpha=0.1,linewidth=0.02)
-
-        ax.set_xlim(-200,200)
-        ax.set_ylim(-200,200)
-        ax.set_zlim(-200,200)
-        ax.plot([-200,200],[0,0],[0,0],"k")
-        ax.plot([0,0],[-200,200],[0,0],"k")
-        ax.plot([0,0],[0,0],[-200,200],"k")
-        ax.set_xlabel('$\Delta$X (pc)')
-        ax.set_ylabel('$\Delta$Y (pc)')
-        ax.set_zlabel('$\Delta$Z (pc)')
-        ax.set_title("{0: 4.1f}".format(times[k][0])+" Myr")
-        ax.text(-500,-350,400,argv[2],color="#000000")
-      
-        pyplot.savefig('{0:}-{1:}/traceback_{2:04d}.png'.format(method,mgpname,k), dpi=200)
-        pyplot.clf()
-        pyplot.close()
-      
-        print mgpmaster[k]
+#    #####################################################
+#    ### The 3D plot. We're going to plot all of the   ###
+#    ###  iterations of the moving group so we can see ###
+#    ###  the full effect. Also, it looks like an      ###
+#    ###  explosion, and that's always cool.           ###
+#    #####################################################
+#    
+#    print mgp_x[0]   
+#    for k in xrange(len(times)):
+#        print times[k]
+#        fig = pyplot.figure(figsize=(9.6,5.5))
+#        ax = fig.add_subplot(111,projection='3d', aspect='equal')
+#
+#        mgp_tx,mgp_ty,mgp_tz = ellipse.triaxial(mgpmaster[k])
+#
+#        #Add the Sun
+#        #ax.scatter(0-mgpmaster[k]['x'],0-mgpmaster[k]['y'],0-mgpmaster[k]['z'],s=50,color="#FFCF00")
+#
+#        ax.scatter(mgp_x[k]-mgpmaster[k]['x'],mgp_y[k]-mgpmaster[k]['y'],mgp_z[k]-mgpmaster[k]['z'],c=mgp_color,s=1,linewidth=0.02,alpha=0.5)
+#        ax.plot_surface(mgp_tx-mgpmaster[k]['x'],mgp_ty-mgpmaster[k]['y'],mgp_tz-mgpmaster[k]['z'],rstride=4,cstride=4,color="#000000",alpha=0.1,linewidth=0.02)
+#
+#        ax.set_xlim(-200,200)
+#        ax.set_ylim(-200,200)
+#        ax.set_zlim(-200,200)
+#        ax.plot([-200,200],[0,0],[0,0],"k")
+#        ax.plot([0,0],[-200,200],[0,0],"k")
+#        ax.plot([0,0],[0,0],[-200,200],"k")
+#        ax.set_xlabel('$\Delta$X (pc)')
+#        ax.set_ylabel('$\Delta$Y (pc)')
+#        ax.set_zlabel('$\Delta$Z (pc)')
+#        ax.set_title("{0: 4.1f}".format(times[k][0])+" Myr")
+#        ax.text(-500,-350,400,argv[2],color="#000000")
+#
+#        pyplot.savefig('{0:}-{1:}/traceback_{2:04d}_gagne.png'.format(method,mgpname,k), dpi=200)
+#        pyplot.clf()
+#        pyplot.close()
+#      
+#        print mgpmaster[k]
 
 if __name__ ==  "__main__":
     traceback()
