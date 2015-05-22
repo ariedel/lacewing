@@ -278,7 +278,7 @@ for i in numpy.arange(0,len(star)):
     fig = pyplot.figure()
     if XYZ:
         fig.set_size_inches(12,6)
-        #fig.suptitle(name+' UVW matches', fontproperties=prop, size='x-large')
+        fig.suptitle(name+' UVW matches', fontproperties=prop, size='x-large')
         ax1 = fig.add_subplot(231, aspect='equal')
         ax2 = fig.add_subplot(232, aspect='equal')
         ax3 = fig.add_subplot(233, aspect='equal')
