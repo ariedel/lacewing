@@ -24,7 +24,9 @@ try:
 except IndexError: 
     print 'syntax: python lacewing_slice.py inputfile XYZ outfile'
 try:
-   XYZ = bool(argv[2])
+   XYZ = argv[2]
+   if XYZ == "XYZ":
+       XYZ = True
 except IndexError:
    XYZ = False
 try:
@@ -415,7 +417,7 @@ for i in numpy.arange(0,len(star)):
     #ax = fig.gca(projection='3d')
     #for i in result[:,:,0]:
     #X,Y,Z = triaxial(result[i,0],result[i,2],result[i,4],result[i,1],result[i,3],result[i,5])
-    outname = 'mgp_figures/{0:}.png'.format(name)
+    outname = '{0:}.png'.format(name)
     pyplot.tight_layout()
     fig.savefig(outname,dpi=300,transparent=False)
     pyplot.clf()
