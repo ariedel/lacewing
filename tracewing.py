@@ -12,8 +12,8 @@ def traceback(argv=None):
     readtable = ascii.get_reader(Reader=ascii.Basic)
     readtable.header.splitter.delimiter = ','
     readtable.data.splitter.delimiter = ','
-    readtable.header.start_line = 1
-    readtable.data.start_line = 2
+    readtable.header.start_line = 0
+    readtable.data.start_line = 1
 
     inputdata = readtable.read(argv[1])
     timespan = float(argv[4])
@@ -143,7 +143,7 @@ def traceback(argv=None):
         ax.text(-10,115,'Moving Group Volume-Radius',color="#FF0000")
         ax.vlines([mgpage],0,500)
     
-        pyplot.savefig("{3:}/traceback_{0:}_{1:07.3f}_{2:+07.3f}_{3:}_{4:}.png".format(name,ra,dec,withmgp,method),dpi=100)
+        pyplot.savefig("traceback_{0:}_{1:07.3f}_{2:+07.3f}_{3:}_{4:}.png".format(name,ra,dec,withmgp,method),dpi=100)
         pyplot.clf()
         pyplot.close()
     
