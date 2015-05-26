@@ -94,20 +94,9 @@ file.close()
 outfile = open(outname,'wb')
 moving_groups = []
 
-moving_groups.append(Mgp(groups[0]))
-moving_groups.append(Mgp(groups[1]))
-moving_groups.append(Mgp(groups[2]))
-moving_groups.append(Mgp(groups[3]))
-moving_groups.append(Mgp(groups[4]))
-moving_groups.append(Mgp(groups[5]))
-moving_groups.append(Mgp(groups[6]))
-moving_groups.append(Mgp(groups[7]))
-moving_groups.append(Mgp(groups[8]))
-moving_groups.append(Mgp(groups[9]))
-moving_groups.append(Mgp(groups[10]))
-moving_groups.append(Mgp(groups[11]))
-moving_groups.append(Mgp(groups[12]))
-moving_groups.append(Mgp(groups[13]))
+# AR 2015.0326: Number of groups is now controlled by the input .csv file (last one is still assumed to be 'field' though)
+for i in range(len(groups)-1):
+    moving_groups.append(Mgp(groups[i]))
 
 filename = argv[1]
 file = open(filename,'rb')
