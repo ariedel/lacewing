@@ -32,7 +32,7 @@ def traceback(argv=None):
 
     timespan = numpy.float(argv[5])
     timestep = -0.1
-    n_int = 4000
+    n_int = 5000
    
     readtable = ascii.get_reader(Reader=ascii.Basic)
     readtable.header.splitter.delimiter = ','
@@ -262,7 +262,7 @@ def traceback(argv=None):
 
     fig2 = pyplot.figure(figsize=(9.6,5.4),dpi=200)
     ax2 = fig2.add_subplot(111)
-    ax2.set_ylim((0,300))
+    ax2.set_ylim((0,100))
     ax2.set_xlim((0,timespan))
     ax2.set_xlabel('Time (Myr)')
     ax2.set_ylabel('(pc)')
@@ -316,7 +316,7 @@ def traceback(argv=None):
     line.set_color((1,0,0,1))
     line.set_linewidth(1)
     ax2.draw_artist(line)
-    save(fig2,'Trace_{0:}_{1:}_tall.png'.format(mgpname,method))
+    save(fig2,'Trace_{0:}_{1:}.png'.format(mgpname,method))
     fig2.clf()
     pyplot.close()
 
