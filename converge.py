@@ -158,49 +158,6 @@ def weightadd(sigma):
 
    return sig
 
-def pmjoin(pmra,epmra,pmdec,epmdec):
-    pm=numpy.sqrt(pmra**2+pmdec**2)
-    epm = numpy.sqrt(epmra**2 + epmdec**2)
-    
-    pa = numpy.arctan2(pmra,pmdec)*180./numpy.pi
-    if pa < 0:
-        pa = 360 + pa
-        
-    epa = abs(pa - numpy.arctan2(pmra-epmra,pmdec-epmdec)*180./numpy.pi)
-    if epa > 180:
-        epa = 360-epa
-
-         
-    return pm,epm,pa,epa
-
-###################################
-# PM split
-###################################
-def pmsplit(pm,epm,pa,epa):
-   pa = (pa % 360) * numpy.pi/180.
-   pi2 = numpy.pi / 2.
-
-   if ((pa >= 0.0) and (pa < pi2)):
-      pmra = pm * numpy.sin(pa)
-      pmdec = pm * numpy.cos(pa)
-
-   if ((pa >= pi2) and (pa < 2*pi2)):
-      pa = pa - pi2
-      pmra = pm * numpy.cos(pa)
-      pmdec = - (pm * numpy.sin(pa))
-      
-   if (pa >= 2*pi2) and (pa < 3*pi2):
-      pa = pa - (2*pi2)
-      pmra =  - (pm * numpy.sin(pa)) 
-      pmdec = - (pm * numpy.cos(pa))
-
-   if (pa >= 3*pi2) and (pa < 4*pi2):
-      pa = pa - (3*pi2)
-      pmra =  - (pm * numpy.cos(pa))
-      pmdec = pm * numpy.sin(pa)
-
-   return pmra,numpy.sqrt(epm),pmdec,numpy.sqrt(epm)
-
 def gaus(x,a,sigma):
     return a*numpy.exp(-(x)**2/(2*sigma**2))
 
