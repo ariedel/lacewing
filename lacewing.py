@@ -21,6 +21,7 @@ import astrometry
 ###      Default output should be a summary mode now
 ### 1.2: Fixed input format
 ###      All astrometry routines now point to astrometry module
+###      Number of groups loaded is now controlled by input .csv file
 ###############################################
 
 try:
@@ -95,22 +96,11 @@ file.close()
 
 moving_groups = []
 
-moving_groups.append(Mgp(groups[0]))
-moving_groups.append(Mgp(groups[1]))
-moving_groups.append(Mgp(groups[2]))
-moving_groups.append(Mgp(groups[3]))
-moving_groups.append(Mgp(groups[4]))
-moving_groups.append(Mgp(groups[5]))
-moving_groups.append(Mgp(groups[6]))
-moving_groups.append(Mgp(groups[7]))
-moving_groups.append(Mgp(groups[8]))
-moving_groups.append(Mgp(groups[9]))
-moving_groups.append(Mgp(groups[10]))
-moving_groups.append(Mgp(groups[11]))
-moving_groups.append(Mgp(groups[12]))
-moving_groups.append(Mgp(groups[13]))
-#moving_groups.append(Mgp(groups[14]))
+# AR 2015.0326: Number of moving groups is now controlled by the input file. (Last one should be "field" and not included)
+for i in range(len(groups)-1):
+    moving_groups.append(Mgp(groups[i]))
 
+# AR 2015.0326: Input file format is now a .csv file with a one line header.
 file = open(infilename,'rb')
 readtable = ascii.get_reader(Reader=ascii.Basic)
 readtable.header.splitter.delimiter = ','
@@ -211,6 +201,7 @@ for i in numpy.arange(0,len(star)):
         mgp = moving_groups[i]
         # this routine computes the expected pm (at 10 parsecs) and RV given an RA and DEC.
         exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv = converge.converge(mgp,ra,era,dec,edec,100000)
+        # AR 2015.0526: This is now an astrometry routine only.
         exp_pm,exp_epm,exp_pa,exp_epa = astrometry.pmjoin(exp_pmra,exp_epmra,exp_pmdec,exp_epmdec)
         pm_new = 0
         epm_new = 0
