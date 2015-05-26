@@ -6,20 +6,22 @@ import kinematics
 import converge
 import astrometry
 
-###################################
-###################################
+###############################################
+###############################################
 ### MAIN ROUTINE
-###################################
-###################################
+###############################################
+###############################################
 
-###################################
-### LACEwING 1.1
-### ARR 2015-04-10
+###############################################
+### LACEwING 1.2
+### ARR 2015-05-26
 ### 1.0: Everything
 ### 1.1: Removed dependence on GROUP columns in input data table
 ###      Fixed dependency on astrometry module
 ###      Default output should be a summary mode now
-###################################
+### 1.2: Fixed input format
+###      All astrometry routines now point to astrometry module
+###############################################
 
 try:
     infilename = argv[1]
@@ -209,7 +211,7 @@ for i in numpy.arange(0,len(star)):
         mgp = moving_groups[i]
         # this routine computes the expected pm (at 10 parsecs) and RV given an RA and DEC.
         exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv = converge.converge(mgp,ra,era,dec,edec,100000)
-        exp_pm,exp_epm,exp_pa,exp_epa = converge.pmjoin(exp_pmra,exp_epmra,exp_pmdec,exp_epmdec)
+        exp_pm,exp_epm,exp_pa,exp_epa = astrometry.pmjoin(exp_pmra,exp_epmra,exp_pmdec,exp_epmdec)
         pm_new = 0
         epm_new = 0
         cosa = 0
