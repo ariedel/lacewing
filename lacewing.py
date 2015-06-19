@@ -140,7 +140,7 @@ for i in numpy.arange(0,len(star)):
     try:
         era = numpy.float(star[i]['eRA'])/1000./3600.
         edec = numpy.float(star[i]['eDEC'])/1000./3600.
-    except (ValueError,IndexError):
+    except (ValueError,IndexError,KeyError):
         era = 1.0/3600.
         edec = 1.0/3600.
 
@@ -150,7 +150,6 @@ for i in numpy.arange(0,len(star)):
         epmra = numpy.float(star[i]['epmRA'])/1000.
         pmdec = numpy.float(star[i]['pmDEC'])/1000.
         epmdec = numpy.float(star[i]['epmDEC'])/1000.
-        pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
         pmexists = 1
     except ValueError:
       try:
@@ -158,7 +157,6 @@ for i in numpy.arange(0,len(star)):
           epmra = 0.01
           pmdec = numpy.float(star[i]['pmDEC'])/1000.
           epmdec = 0.01
-          pm,epm,pa,epa = astrometry.pmjoin(pmra,epmra,pmdec,epmdec)
           pmexists = 1
       except ValueError:
           pmra = 999.99
@@ -180,11 +178,10 @@ for i in numpy.arange(0,len(star)):
         rv = numpy.float(star[i]['rv'])
         erv = numpy.float(star[i]['erv'])
         rvexists = 1
-        print "{0:+9.5f} {1:8.5f}".format(rv,erv)
     except (ValueError, IndexError):
         rvexists=0
 
-    print "{8:}  {0:09.5f} {1:7.5f}  {2:+09.5f} {3:7.5f}  {4:+9.5f} {5:8.5f}  {6:+9.5f} {7:8.5f}  {9:5.4f} {10:06.2f}".format(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,name,pm,pa)
+#    print "{8:}  {0:09.5f} {1:7.5f}  {2:+09.5f} {3:7.5f}  {4:+9.5f} {5:8.5f}  {6:+9.5f} {7:8.5f}".format(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,name)
 
     #print "Running Convergence"
 
