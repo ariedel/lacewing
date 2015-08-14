@@ -126,11 +126,11 @@ for i in numpy.arange(0,len(star)):
     try:
         ra = float(star[i]['RA'])
         dec = float(star[i]['DEC'])
-    except (ValueError,IndexError):
+    except (ValueError,IndexError,KeyError):
         try:
             ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
             dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
-            if star[i]['DECf'] == '-':
+            if star[i]['DECf'].strip() == '-':
                 dec = dec * -1.0
         except ValueError:
             ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
