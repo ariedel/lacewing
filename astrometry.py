@@ -146,3 +146,66 @@ def addpm(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,time):
 
 
     return ra,era,dec,edec
+
+##############################################
+# PROPER MOTION to GREAT CIRCLE
+##############################################
+
+def greatcircle(ra,dec,pmra,pmdec):
+   radeg=180/numpy.pi
+   # set up a great circle
+   raeq=numpy.arange(0,361,1)/radeg
+   deceq=numpy.zeros(361)
+                                # to find the pole of the appropriate
+                                # great circle, we must take the cross
+                                # product of the two unit vectors
+                                # (ra,dec) and (ra+pmra/dec,dec+pmdec)
+                                # in cartesian coordinates.
+   rar=ra/radeg
+   decr=dec/radeg
+#    print ra,dec,rar,decr
+   pmrar=pmra/3600./radeg
+   pmdecr=pmdec/3600./radeg
+   x1=numpy.cos(decr)*numpy.cos(rar)
+   y1=numpy.cos(decr)*numpy.sin(rar)
+   z1=numpy.sin(decr)
+   x2=numpy.cos(decr+pmdecr)*numpy.cos(rar+pmrar/numpy.cos(decr))
+   y2=numpy.cos(decr+pmdecr)*numpy.sin(rar+pmrar/numpy.cos(decr))
+   z2=numpy.sin(decr+pmdecr)
+   #    print x1,y1,z1,sqrt(x1**2+y1**2+z1**2),x2,y2,z2,sqrt(x2**2+y2**2+z2**2)
+   #   print
+
+    # the cross-product:
+   x=y1*z2-z1*y2
+   y=z1*x2-x1*z2
+   z=x1*y2-y1*x2
+    # (x,y,z) is the coordinate of the great circle's pole.
+   r=numpy.sqrt(x**2+y**2+z**2)
+
+    # get the RA and DEC (in radians, fixing the bounds)
+   rap=numpy.arctan2(y,x)
+   if rap < 0:
+      rap = rap + 2*numpy.pi
+   decp=numpy.arcsin(z/r)
+#   if decp gt !pi/2. then decp=!pi/2.-decp
+   
+#   print astrotools.deg2HMS(ra=ra),astrotools.deg2HMS(dec=dec),astrotools.deg2HMS(ra=(ra+pmra/3600./numpy.cos(dec))),astrotools.deg2HMS(dec=dec+pmdec/3600.),astrotools.deg2HMS(ra=rap*radeg),astrotools.deg2HMS(dec=decp*radeg)
+    # angular distance between star and equatorial pole (ie, the dec)
+   dlon=(90-dec)/radeg
+   sdp = numpy.sin(decp)
+   cdp = numpy.sqrt(1.0-sdp*sdp)
+   
+    # stolen from glactc.pro
+   sgb = numpy.sin(deceq)
+   cgb = numpy.sqrt(1.0-sgb*sgb)
+   sdec = sgb*sdp + cgb*cdp*numpy.cos(dlon-raeq)
+   decgc = radeg * numpy.arcsin(sdec)
+   cdec = numpy.sqrt(1.0-sdec*sdec)
+   sinf = cgb * numpy.sin(dlon-raeq) / cdec
+   cosf = (sgb-sdp*sdec) / (cdp*cdec)
+   ragc = radeg * (rap + numpy.arctan2(sinf,cosf))
+   
+   ragc[numpy.where(ragc < 0)] = ragc[numpy.where(ragc < 0)]+360
+
+   return ragc,decgc
+

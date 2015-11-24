@@ -1,10 +1,12 @@
-import numpy
-import scipy
+import numpy as np
 from astropy.io import ascii
+from astropy.coordinates import SkyCoord
+from astropy import units as u 
 from sys import argv
 import kinematics
-import converge
 import astrometry
+from scipy.special import erfc
+import ellipse
 
 ###############################################
 ###############################################
@@ -13,8 +15,8 @@ import astrometry
 ###############################################
 
 ###############################################
-### LACEwING 1.2
-### ARR 2015-05-26
+### LACEwING 1.3
+### ARR 2015-10-16
 ### 1.0: Everything
 ### 1.1: Removed dependence on GROUP columns in input data table
 ###      Fixed dependency on astrometry module
@@ -22,204 +24,236 @@ import astrometry
 ### 1.2: Fixed input format
 ###      All astrometry routines now point to astrometry module
 ###      Number of groups loaded is now controlled by input .csv file
+### 1.3: The LACEwING algorithm is now a separate function from the
+###      moving group loader and the csv file reader function.
 ###############################################
 
-try:
-    infilename = argv[1]
-except IndexError: 
-    print 'syntax: python lacewing.py inputfile young=young outname=outfile verbose=verbose rawgofs=percentage'
-try:
-    young = argv[2]
-except IndexError:
-    young = 'field'
-try:
-    outfilename = argv[3]
-except IndexError:
-    outfilename = 'lacewing_output.csv'
-try:
-    verbose = argv[4]
-except IndexError:
-    verbose = 'quiet'
-try:
-    percentages = argv[5]
-except IndexError:
-    percentages = 'percentage'
+######################################################
+## Load the moving groups into a moving group class ##
+######################################################
 
-class Mgp:
-    def __init__(self,mgp):
-        self.name = mgp["Name"]
-        self.U = numpy.float(mgp["U"])
-        self.A = numpy.float(mgp["A"])
-        self.V = numpy.float(mgp["V"])
-        self.B = numpy.float(mgp["B"])
-        self.W = numpy.float(mgp["W"])
-        self.C = numpy.float(mgp["C"])
-        self.UV = numpy.float(mgp["UV"])
-        self.UW = numpy.float(mgp["UW"])
-        self.VW = numpy.float(mgp["VW"])
-        self.X = numpy.float(mgp["X"])
-        self.D = numpy.float(mgp["D"])
-        self.Y = numpy.float(mgp["Y"])
-        self.E = numpy.float(mgp["E"])
-        self.Z = numpy.float(mgp["Z"])
-        self.F = numpy.float(mgp["F"])
-        self.XY = numpy.float(mgp["XY"])
-        self.XZ = numpy.float(mgp["XZ"])
-        self.YZ = numpy.float(mgp["YZ"])
+def moving_group_loader():
 
-        self.color = [mgp["Red"],mgp["Green"],mgp["Blue"]]
+    class Mgp:
+        def __init__(self,mgp):
+            self.name = mgp["Name"]
+            self.U = np.float(mgp["U"])
+            self.A = np.float(mgp["A"])
+            self.V = np.float(mgp["V"])
+            self.B = np.float(mgp["B"])
+            self.W = np.float(mgp["W"])
+            self.C = np.float(mgp["C"])
+            self.UV = np.float(mgp["UV"])
+            self.UW = np.float(mgp["UW"])
+            self.VW = np.float(mgp["VW"])
+            self.X = np.float(mgp["X"])
+            self.D = np.float(mgp["D"])
+            self.Y = np.float(mgp["Y"])
+            self.E = np.float(mgp["E"])
+            self.Z = np.float(mgp["Z"])
+            self.F = np.float(mgp["F"])
+            self.XY = np.float(mgp["XY"])
+            self.XZ = np.float(mgp["XZ"])
+            self.YZ = np.float(mgp["YZ"])
 
-        self.coeff_all = [ [mgp['field_all_M'],mgp['field_all_S']],[mgp['field_pm_M'],mgp['field_pm_S']],[mgp['field_dist_M'],mgp['field_dist_S']],[mgp['field_rv_M'],mgp['field_rv_S']],[mgp['field_pmdist_M'],mgp['field_pmdist_S']],[mgp['field_pmrv_M'],mgp['field_pmrv_S']],[mgp['field_distrv_M'],mgp['field_distrv_S']]]
-        self.coeff_young = [ [mgp['young_all_M'],mgp['young_all_S']],[mgp['young_pm_M'],mgp['young_pm_S']],[mgp['young_dist_M'],mgp['young_dist_S']],[mgp['young_rv_M'],mgp['young_rv_S']],[mgp['young_pmdist_M'],mgp['young_pmdist_S']],[mgp['young_pmrv_M'],mgp['young_pmrv_S']],[mgp['young_distrv_M'],mgp['young_distrv_S']]]
-        for x in range(len(self.coeff_all)):
-            if astrometry.isnumber(self.coeff_all[x][0]):
-                self.coeff_all[x][0] = numpy.float(self.coeff_all[x][0])
-            if astrometry.isnumber(self.coeff_all[x][1]):
-                self.coeff_all[x][1] = numpy.float(self.coeff_all[x][1])
-        for x in range(len(self.coeff_young)):
-            if astrometry.isnumber(self.coeff_young[x][0]):
-                self.coeff_young[x][0] = numpy.float(self.coeff_young[x][0])
-            if astrometry.isnumber(self.coeff_young[x][1]):
-                self.coeff_young[x][1] = numpy.float(self.coeff_young[x][1])
+            self.A2 = np.float(mgp["A2"])
+            self.B2 = np.float(mgp["B2"])
+            self.C2 = np.float(mgp["C2"])
+            self.UV2 = np.float(mgp["UV2"])
+            self.UW2 = np.float(mgp["UW2"])
+            self.VW2 = np.float(mgp["VW2"])
+            self.D2 = np.float(mgp["D2"])
+            self.E2 = np.float(mgp["E2"])
+            self.F2 = np.float(mgp["F2"])
+            self.XY2 = np.float(mgp["XY2"])
+            self.XZ2 = np.float(mgp["XZ2"])
+            self.YZ2 = np.float(mgp["YZ2"])
 
-# read in ellipse parameters for associations
+            self.color = [mgp["Red"],mgp["Green"],mgp["Blue"]]
+            self.weightednumber = np.float(mgp["Weightednumber"])
+            self.uniform = np.int(mgp["uniform"])
 
-filename = argv[1]
-file = open('Moving_Group_all.csv','rb')
-readtable = ascii.get_reader(Reader=ascii.Basic)
-readtable.header.splitter.delimiter = ','
-readtable.data.splitter.delimiter = ','
-readtable.header.start_line = 0
-readtable.data.start_line = 1
-groups = readtable.read(file)
-file.close()
+            self.coeff_all = [ [mgp['field_all_M'],mgp['field_all_S']],[mgp['field_pm_M'],mgp['field_pm_S']],[mgp['field_dist_M'],mgp['field_dist_S']],[mgp['field_rv_M'],mgp['field_rv_S']],[mgp['field_pmdist_M'],mgp['field_pmdist_S']],[mgp['field_pmrv_M'],mgp['field_pmrv_S']],[mgp['field_distrv_M'],mgp['field_distrv_S']]]
+            self.coeff_young = [ [mgp['young_all_M'],mgp['young_all_S']],[mgp['young_pm_M'],mgp['young_pm_S']],[mgp['young_dist_M'],mgp['young_dist_S']],[mgp['young_rv_M'],mgp['young_rv_S']],[mgp['young_pmdist_M'],mgp['young_pmdist_S']],[mgp['young_pmrv_M'],mgp['young_pmrv_S']],[mgp['young_distrv_M'],mgp['young_distrv_S']]]
+            for x in range(len(self.coeff_all)):
+                if astrometry.isnumber(self.coeff_all[x][0]):
+                    self.coeff_all[x][0] = np.float(self.coeff_all[x][0])
+                if astrometry.isnumber(self.coeff_all[x][1]):
+                    self.coeff_all[x][1] = np.float(self.coeff_all[x][1])
+            for x in range(len(self.coeff_young)):
+                if astrometry.isnumber(self.coeff_young[x][0]):
+                    self.coeff_young[x][0] = np.float(self.coeff_young[x][0])
+                if astrometry.isnumber(self.coeff_young[x][1]):
+                    self.coeff_young[x][1] = np.float(self.coeff_young[x][1])
 
-moving_groups = []
+    # read in ellipse parameters for associations
 
-# AR 2015.0326: Number of moving groups is now controlled by the input file. (Last one should be "field" and not included)
-for i in range(len(groups)-1):
-    moving_groups.append(Mgp(groups[i]))
+    file = open('Moving_Group_all.csv','rb')
+    readtable = ascii.get_reader(Reader=ascii.Basic)
+    readtable.header.splitter.delimiter = ','
+    readtable.data.splitter.delimiter = ','
+    readtable.header.start_line = 0
+    readtable.data.start_line = 1
+    groups = readtable.read(file)
+    file.close()
 
-# AR 2015.0326: Input file format is now a .csv file with a one line header.
-file = open(infilename,'rb')
-readtable = ascii.get_reader(Reader=ascii.Basic)
-readtable.header.splitter.delimiter = ','
-readtable.data.splitter.delimiter = ','
-readtable.header.start_line = 0
-readtable.data.start_line = 1
-star = readtable.read(file)
-file.close()
+    moving_groups = []
+    # AR 2015.0326: Number of moving groups is now controlled by the input file. (Last one should be "field")
+    for i in range(len(groups)):
+        moving_groups.append(Mgp(groups[i]))
 
-outfile = open(outfilename,'wb')
-if verbose == "verbose":
-    # verbose output is one line per moving group per entry (14 lines per star) in CSV format
-    outfile.write('lineno,Name,RA,DEC,pmRA,pmDEC,MGP,d1,sig,d2,sig_pm,pm_|_,exp_pm_|_,d3,sig_dist,dist,exp_dist,exp_edist,d4,sig_rv,rv,exp_rv,exp_erv,d5,sig_pos,mgp1,mgp2,mgp3,.\n')
-else:
-    # regular output is a one line per entry summary, also in .csv form
-    outfile.write('Name,Group,Percent,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps_Cha,eta_Cha,TW_Hya,beta_Pic,Octans,Tuc-Hor,Columba,Argus,AB_Dor,Pleiades,Her-Lyr,Coma_Ber,Ursa_Major,Hyades\n')
+    return moving_groups
 
-lineno = 1
+# Calculate the proper motion vector at the star's RA and DEC and a distance of 10 pc
+def converge(assoc,ra,era,dec,edec,n_init):
 
-for i in numpy.arange(0,len(star)):
+   ra_tmp = ra + np.random.randn(n_init) * era / np.cos(dec*180/np.pi)
+   dec_tmp = dec + np.random.randn(n_init) * edec
+
+   # generate random points within the moving group distribution
+   a = assoc.A * np.random.randn(n_init)
+   b = assoc.B * np.random.randn(n_init)
+   c = assoc.C * np.random.randn(n_init)
+   # rotate them to account for the skewed distribution
+   rotmatrix = ellipse.rotate(assoc.UV,assoc.UW,assoc.VW)
+   rotmatrix = rotmatrix.transpose()
+   vec = np.dot(rotmatrix,np.asarray([a,b,c]))
+
+   u = vec[0]+assoc.U
+   v = vec[1]+assoc.V
+   w = vec[2]+assoc.W
+
+   # conversion between galactic and equatorial coordinates
+   k = 4.74047     #Equivalent of 1 A.U/yr in km/s  
+   a_g = np.array([[-0.0548755604, -0.8734370902,-0.4838350155],
+                [+0.4941094279, -0.4448296300, 0.7469822445],
+                [-0.8676661490, -0.1980763734, +0.4559837762]]) # rotation matrix for Galactic-->J2000
+   radeg = 180/np.pi
+
+   cosd = np.cos(dec_tmp/radeg)
+   sind = np.sin(dec_tmp/radeg)
+   cosa = np.cos(ra_tmp/radeg)
+   sina = np.sin(ra_tmp/radeg)
+    
+   a_c = np.array([ [cosa*cosd,-sina,-cosa*sind],
+                       [sina*cosd,cosa,-sina*sind],
+                       [sind,0,cosd] ]) # rotation matrix for cartesian to spherical
+
+   b = np.dot(a_g,a_c)
+
+   vec1 = (b[0,0] * u + b[1,0] * v + b[2,0] * w)
+   vec2 = (b[0,1] * u + b[1,1] * v + b[2,1] * w)
+   vec3 = (b[0,2] * u + b[1,2] * v + b[2,2] * w)
+
+   vrad = vec1
+   pmra = vec2 / (k * 10.0)
+   pmdec = vec3 / (k * 10.0)
    
-    name = star[i]['Name']
-    try:
-        ra = float(star[i]['RA'])
-        dec = float(star[i]['DEC'])
-    except (ValueError,IndexError,KeyError):
-        try:
-            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm']),float(star[i]['DECs'])))
-            if star[i]['DECf'].strip() == '-':
-                dec = dec * -1.0
-        except ValueError:
-            ra = astrometry.ten((float(star[i]['Rah']),float(star[i]['Ram']),float(star[i]['Ras'])))*15.
-            dec = astrometry.ten((numpy.abs(float(star[i]['DECd'])),float(star[i]['DECm'])))
-            if star[i]['DECf'] == '-':
-                dec = dec * -1.0
-    try:
-        era = numpy.float(star[i]['eRA'])/1000./3600.
-        edec = numpy.float(star[i]['eDEC'])/1000./3600.
-    except (ValueError,IndexError,KeyError):
-        era = 1.0/3600.
-        edec = 1.0/3600.
+   exp_rv = np.mean(vrad)
+   exp_erv = np.std(vrad,ddof=1)
+   exp_pmra = np.mean(pmra)
+   exp_epmra = np.std(pmra,ddof=1)
+   exp_pmdec = np.mean(pmdec)
+   exp_epmdec = np.std(pmdec,ddof=1)
 
-    pmexists = 0
-    try:
-        pmra = numpy.float(star[i]['pmRA'])/1000.
-        epmra = numpy.float(star[i]['epmRA'])/1000.
-        pmdec = numpy.float(star[i]['pmDEC'])/1000.
-        epmdec = numpy.float(star[i]['epmDEC'])/1000.
+   return exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv
+
+
+# given the ra, dec, and parallax (or expected distance), check the spatial agreement.
+def spatial(mgp,ra,era,dec,edec,pi,epi,n_init):
+   
+   # first, get the XYZ position
+   tra = ra + (np.random.randn(n_init)*era)*np.cos(dec*np.pi/180.)
+   tdec = dec + np.random.randn(n_init)*edec
+   tpi = pi + np.random.randn(n_init)*epi
+   u,v,w,x,y,z = kinematics.gal_uvwxyz(ra=tra,dec=tdec,plx=tpi,pmra=np.zeros_like(tra),pmdec=np.zeros_like(tra),vrad=np.zeros_like(tra))
+
+   # second: We now need to transform the XYZ position into the coordinate space of the randomly oriented ellipse.
+   #  step 1: get the position of the target relative to the moving group
+   star = [x-mgp.X,y-mgp.Y,z-mgp.Z]
+   dist = np.sqrt(np.mean(star[0])**2+np.mean(star[1])**2+np.mean(star[2])**2)
+
+   #  step 2: rotate that position into the moving group's coordinate system
+   rotmatrix = ellipse.rotate(mgp.XY,mgp.XZ,mgp.YZ)
+   rotmatrix = rotmatrix.transpose()
+
+   pos = np.dot(rotmatrix,star)
+   # pos now contains the position of the star relative to the center of the moving group, rotated to the frame of the moving group.
+   
+   # third (and finally): Get a sigma agreement.
+   sigmas = np.sqrt((pos[0]/mgp.D)**2+(pos[1]/mgp.E)**2+(pos[2]/mgp.F)**2)
+   sigma = np.mean(sigmas)
+   esigma = np.std(sigmas,ddof=1)
+
+   return sigma,esigma,dist
+
+def weightadd(sigma):
+   sig = 0
+   for g in range(len(sigma)):
+      sig = sig + sigma[g]**2
+   sig = np.sqrt(sig)
+
+   if len(sigma) > 1:
+      sig = sig/(len(sigma))
+
+   return sig
+
+def gaus(x,a,sigma):
+    return a*np.exp(-(x)**2/(2*sigma**2))
+
+def gauscdf(x,m,sigma):
+    return 0.5*(erfc((x-m)/(sigma*np.sqrt(2))))
+
+
+#################################
+## The Core LACEwING algorithm ##
+#################################
+
+def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,edec=None,pmra=None,epmra=None,pmdec=None,epmdec=None,plx=None,eplx=None,rv=None,erv=None):
+    if ra is None or dec is None:
+        raise Exception('ERROR - You need at least an RA and a DEC for this to work')
+    if pmra is None or pmdec is None:
+        pmexists = 0
+    else:
         pmexists = 1
-    except ValueError:
-      try:
-          pmra = numpy.float(star[i]['pmRA'])/1000.
-          epmra = 0.01
-          pmdec = numpy.float(star[i]['pmDEC'])/1000.
-          epmdec = 0.01
-          pmexists = 1
-      except ValueError:
-          pmra = 999.99
-          epmra = 999.99
-          pmdec = -999.99
-          epmdec = 999.99
-          pa = 999.99
-          pm = 999.99
-
-    distexists=0
-    rvexists=0
-    try:
-        plx = numpy.float(star[i]['pi'])/1000.
-        eplx = numpy.float(star[i]['epi'])/1000.
+    if plx is None:
+        distexists = 0
+    else:
         distexists = 1
-    except (ValueError, IndexError):
-        distexists=0
-    try:
-        rv = numpy.float(star[i]['rv'])
-        erv = numpy.float(star[i]['erv'])
+    if rv is None:
+        rvexists = 0
+    else:
         rvexists = 1
-    except (ValueError, IndexError):
-        rvexists=0
+    if iterate is None:
+        iterate = 10000
+    #print iterate
 
-#    print "{8:}  {0:09.5f} {1:7.5f}  {2:+09.5f} {3:7.5f}  {4:+9.5f} {5:8.5f}  {6:+9.5f} {7:8.5f}".format(ra,era,dec,edec,pmra,epmra,pmdec,epmdec,name)
+    output = []
 
-    #print "Running Convergence"
-
-    # these lists will only be needed to save output for the regular summary.
-    if verbose != "verbose":
-        matchgroup = []
-        matchsig = []
-        matchdist = []
-        matchedist = []
-        matchrv = []
-        matcherv = []
-
-    for i in range(len(moving_groups)):
+    for i in range(len(moving_groups)-1): # because the last moving group is "field"
         mgp = moving_groups[i]
         # this routine computes the expected pm (at 10 parsecs) and RV given an RA and DEC.
-        exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv = converge.converge(mgp,ra,era,dec,edec,100000)
+        exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv = converge(mgp,ra,era,dec,edec,iterate)
         # AR 2015.0526: This is now an astrometry routine only.
         exp_pm,exp_epm,exp_pa,exp_epa = astrometry.pmjoin(exp_pmra,exp_epmra,exp_pmdec,exp_epmdec)
-        pm_new = 0
-        epm_new = 0
-        cosa = 0
-        sina = 0
-        exp_dist = 0
-        exp_edist = 0
-        exp_pm_new = 0
-        exp_epm_new = 0
-        pm_sig = 0
-        rv_sig = 0
-        dist_sig = 0
-        pos_sig = 0
-        sig = 0
+        pm_new = None
+        epm_new = None
+        cosa = None
+        sina = None
+        exp_dist = None
+        exp_edist = None
+        pm_sig = None
+        rv_sig = None
+        dist_sig = None
+        pos_sig = None
+        pos_ksig = None
+        pos_esig = None
+        pos_eksig = None
+        pos_sep = None
+        pos_ksep = None
+        sig = None
 
         sigma = []
-
-        pm_string = 'PM: s=,"",   "",    {0:+6.2f}, '.format(0) # ok, cheating, but the expected pm_|_ is 0 by definition.
-        dist_string = 'Dist: s=, "",    "",    "",    "", '
-        rv_string = 'RV: s=,"",    "",    {0:+8.2f}, {1: 7.2f},'.format(exp_rv,exp_erv)
-        pos_string = 'XYZ: s=,"",'
 
         # step 1: compare proper motions. We're going to rotate the star's proper motion 
         #  vectors (pmRA, pmDEC) by the angle of the association's proper motion, to 
@@ -227,23 +261,23 @@ for i in numpy.arange(0,len(star)):
         if pmexists == 1:
             # 1a. Calculate the parallel and perpendicular components of the proper motion
             #   First: compute a rotation matrix to transform pmRA,pmDEC into pm= and pm_|_
-            cosa = numpy.cos(exp_pa*numpy.pi/180.0)
-            sina = numpy.sin(exp_pa*numpy.pi/180.0)
+            cosa = np.cos(exp_pa*np.pi/180.0)
+            sina = np.sin(exp_pa*np.pi/180.0)
             rotmatrix = [ [ cosa, -sina ] , [sina, cosa] ]
           
             #   Second: Apply this rotation matrix to the measured and expected proper 
             #    motion vectors.
-            pm_new = numpy.dot(rotmatrix,[pmra,pmdec])
-            epm_new = numpy.dot(rotmatrix,[epmra,epmdec])
-            exp_pm_new = numpy.dot(rotmatrix,[exp_pmra,exp_pmdec]) # should be [0,pm] if correctly done
-            exp_epm_new = numpy.dot(rotmatrix,[exp_epmra,exp_epmdec])
+            pm_new = np.dot(rotmatrix,[pmra,pmdec])
+            epm_new = np.dot(rotmatrix,[epmra,epmdec])
+            exp_pm_new = np.dot(rotmatrix,[exp_pmra,exp_pmdec]) # should be [0,pm] if correctly done
+            exp_epm_new = np.dot(rotmatrix,[exp_epmra,exp_epmdec])
             # The 0th element is the perpendicular component, the 1st is parallel
             
             # 1b. Compute a kinematic distance by comparing the magnitude of the 
             #   expected pm vector (which was calculated for a distance of 10 
             #   parsecs) to the measured parallel one
             exp_dist = exp_pm_new[1]/pm_new[1] * 10.0
-            exp_edist = numpy.sqrt((exp_epm_new[1]/exp_pm_new[1])**2 + (epm_new[1]/pm_new[1])**2) * exp_dist
+            exp_edist = np.sqrt((exp_epm_new[1]/exp_pm_new[1])**2 + (epm_new[1]/pm_new[1])**2) * exp_dist
 
             # 1c. Now we use that kinematic distance to scale the error out. 
             #   Why? If the proper motion was in completely the wrong direction, 
@@ -253,7 +287,7 @@ for i in numpy.arange(0,len(star)):
 
             # 1d. Compute the proper motion sigma based on the perpendicular 
             #   component (with scaled errors)
-            pm_sig = numpy.sqrt(pm_new[0]**2)/(numpy.sqrt(epm_new[0]**2 + exp_epm_new[0]**2))
+            pm_sig = np.sqrt(pm_new[0]**2)/(np.sqrt(epm_new[0]**2 + exp_epm_new[0]**2))
 
             # 1e. this should weed out anything where the pm vector was flipped (and
             #   distance was negative). I initially thought this should go under the
@@ -265,46 +299,30 @@ for i in numpy.arange(0,len(star)):
                 #  pm_new[0]*exp_dist*4.74
 
             sigma.append(pm_sig)
-            pm_string = 'PM: s=,{0: 8.2f}, {1:+6.2f},{2:+6.2f}, '.format(pm_sig,pm_new[0],exp_pm_new[0])
 
-            dist_string = 'Dist: s=,"",    "",    {0:+8.2f}, {1: 7.2f},'.format(exp_dist,exp_edist)
-            converge_plx = 1/exp_dist
-            converge_eplx = exp_edist/(exp_dist**2)
+            pos_ksig,pos_eksig,pos_ksep = spatial(mgp,ra,era,dec,edec,1/exp_dist,exp_edist/(exp_dist**2),iterate)
 
-        # step 2: Distances exist. Without a proper motion, we can't do anything.
-        if distexists == 1:
-            dist_string = 'Dist: s=,"",   {0:+8.2f},    "",    "",'.format(1/plx)
-            converge_plx = plx
-            converge_eplx = eplx
+        if (pmexists == 1) & (distexists == 0): # calculate the positional uncertainty for distance, but only use it if the distance does not exist. 
+            sigma.append(pos_ksig)
+
+        # step 2: Distances exist. We can do the real test for spatial position.
+        if (distexists == 1):
+            pos_sig,pos_esig,pos_sep = spatial(mgp,ra,era,dec,edec,plx,eplx,iterate)
+            sigma.append(pos_sig)
 
         # step 3: Distances AND proper motions exist. Now we can compute a kinematic distance error.
         if (pmexists == 1) & (distexists == 1):
-
             # 3a. use the kinematic distance calculated in step 1c, which should have already run if pmexists==1.
-            dist_sig = numpy.abs(1/plx - exp_dist) / numpy.sqrt((eplx/plx**2)**2 + exp_edist**2)
-
+            dist_sig = np.abs(1/plx - exp_dist) / np.sqrt((eplx/plx**2)**2 + exp_edist**2)
             sigma.append(dist_sig)
-            dist_string = 'Dist: s=,{0: 8.2f}, {1:+8.2f},{2:+8.2f},{3: 7.2f},'.format(dist_sig,1/plx,exp_dist,exp_edist)
-
 
         # step 4: RVs exist. This is straightforward: We have an estimated RV from the convergence.
         if (rvexists == 1):
-            rv_sig = numpy.abs(rv - exp_rv) / numpy.sqrt(erv**2 + exp_erv**2)
-
+            rv_sig = np.abs(rv - exp_rv) / np.sqrt(erv**2 + exp_erv**2)
             sigma.append(rv_sig)
-            rv_string = 'RV: s=,{0: 8.2f},   {1:+8.2f},{2:+8.2f},{3: 7.2f},'.format(rv_sig,rv,exp_rv,exp_erv)
-
-        # step 5: A test for spatial position. I feed in RA, DEC, and the distance (either trig
-        #   parallax or kinematic distance) and converge.spatial() tells me how close it is to
-        #   the ellipse describing the moving group.
-        if (pmexists ==1) | (distexists == 1):
-            pos_sig,pos_esig = converge.spatial(mgp,ra,era,dec,edec,converge_plx,converge_eplx,10000)
-
-            sigma.append(pos_sig)
-            pos_string = 'XYZ: s=,{0: 8.2f},'.format(pos_sig)
 
 
-        sig = converge.weightadd(sigma)
+        sig = weightadd(sigma)
                         
         #print sig
         if young == "young":
@@ -313,91 +331,211 @@ for i in numpy.arange(0,len(star)):
             coeff = mgp.coeff_all
 
         #print coeff[0][0],astrometry.isnumber(coeff[0][0])
-        percent = 0
-        if percentages == 'percentage':
-            if pmexists == 1:
-                if distexists == 1:
-                    if rvexists == 1:
-                        if numpy.logical_not(astrometry.isnumber(coeff[0][0])):
-                            if sig < coeff[0][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[0][0],coeff[0][1])
-                    else:
-                        if numpy.logical_not(astrometry.isnumber(coeff[4][0])):
-                            if sig < coeff[4][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[4][0],coeff[4][1])
+        if pmexists == 1:
+            if distexists == 1:
+                if rvexists == 1:
+                    percent = gauscdf(sig,coeff[0][0],coeff[0][1])
                 else:
-                    if rvexists == 1:
-                        if numpy.logical_not(astrometry.isnumber(coeff[5][0])):
-                            if sig < coeff[5][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[5][0],coeff[5][1])
-                    else:
-                        if numpy.logical_not(astrometry.isnumber(coeff[1][0])):
-                            if sig < coeff[1][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[1][0],coeff[1][1])
+                    percent = gauscdf(sig,coeff[4][0],coeff[4][1])
             else:
-                if distexists == 1:
-                    if rvexists == 1:
-                        if numpy.logical_not(astrometry.isnumber(coeff[6][0])):
-                            if sig < coeff[6][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[6][0],coeff[6][1])
-                    else:
-                        if numpy.logical_not(astrometry.isnumber(coeff[2][0])):
-                            if sig < coeff[2][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[2][0],coeff[2][1])
+                if rvexists == 1:
+                    percent = gauscdf(sig,coeff[5][0],coeff[5][1])
                 else:
-                    if rvexists == 1:
-                        if numpy.logical_not(astrometry.isnumber(coeff[3][0])):
-                            if sig < coeff[3][1]:
-                                percent = 1
-                        else:
-                            percent = converge.gauscdf(sig,coeff[3][0],coeff[3][1])
-         
-            percent = percent * 100
+                    percent = gauscdf(sig,coeff[1][0],coeff[1][1])
         else:
-            # if percentage is set to anything other than "percentage", output the raw goodness-of-fit.
-            percent = sig
-      
+            if distexists == 1:
+                if rvexists == 1:
+                    percent = gauscdf(sig,coeff[6][0],coeff[6][1])
+                else:
+                    percent = gauscdf(sig,coeff[2][0],coeff[2][1])
+            else:
+                if rvexists == 1:
+                    percent = gauscdf(sig,coeff[3][0],coeff[3][1])
+                else:
+                    percent = 0
+         
+        percent = percent * 100
 
-        # remove spaces from name - helps with programming later on
-        name = name.replace(' ', '_')
-        mgpname = mgp.name.replace(' ', '_')
+        output.append({'group':mgp.name, 'gof':sig, 'probability': percent, 'pmsig': pm_sig, 'kin_pmra':exp_pmra,'kin_epmra':exp_epmra,'kin_pmdec':exp_pmdec,'kin_epmdec':exp_epmdec,'distsig':dist_sig,'kin_dist':exp_dist, 'kin_edist':exp_edist, 'rvsig':rv_sig,'kin_rv':exp_rv,'kin_erv':exp_erv,'possig':pos_sig,'pos_esig':pos_esig,'pos_sep':pos_sep, 'posksig':pos_ksig,'pos_eksig':pos_eksig,'pos_ksep':pos_ksep})
 
-        #print '{11:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:}'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,lineno)
+    return output
+
+#################################
+## Default LACEwING csv loader ##
+#################################
+
+def csv_loader(infilename):
+
+    file = open(infilename,'rb')
+    readtable = ascii.get_reader(Reader=ascii.Basic)
+    readtable.header.splitter.delimiter = ','
+    readtable.data.splitter.delimiter = ','
+    readtable.header.start_line = 0
+    readtable.data.start_line = 1
+    star = readtable.read(file)
+    file.close()
+    
+    name = []
+    coord = []
+    era = []
+    edec = []
+    pmra = []
+    epmra = []
+    pmdec = []
+    epmdec = []
+    plx = []
+    eplx = []
+    rv = []
+    erv = []
+    note = []
+    
+    for i in np.arange(0,len(star)):
+       
+        name.append(star[i]['Name'])
+        try:
+            tcoord = SkyCoord(ra=star[i]['RA'],dec=star[i]['DEC'], unit=(u.degree,u.degree))
+        except (ValueError,IndexError,KeyError):
+            tcoord = SkyCoord('{0:} {1:} {2:} {3:} {4:} {5:}'.format(star[i]['Rah'],star[i]['Ram'],star[i]['Ras'],star[i]['DECd'],star[i]['DECm'],star[i]['DECs']), unit=(u.hourangle, u.deg))
+
+        coord.append(tcoord)
+
+        try:
+            tera = np.float(star[i]['eRA'])/1000./3600.
+            tedec = np.float(star[i]['eDEC'])/1000./3600.
+        except (ValueError,IndexError,KeyError):
+            tera = 1.0/3600.
+            tedec = 1.0/3600.
+        era.append(tera)
+        edec.append(tedec)
+    
+        try:
+            tpmra = np.float(star[i]['pmRA'])/1000.
+            tepmra = np.float(star[i]['epmRA'])/1000.
+            tpmdec = np.float(star[i]['pmDEC'])/1000.
+            tepmdec = np.float(star[i]['epmDEC'])/1000.
+        except (ValueError,IndexError,KeyError):
+          try:
+              tpmra = np.float(star[i]['pmRA'])/1000.
+              tepmra = 0.01
+              tpmdec = np.float(star[i]['pmDEC'])/1000.
+              tepmdec = 0.01
+          except (ValueError,IndexError,KeyError):
+              tpmra = None
+              tepmra = None
+              tpmdec = None
+              tepmdec = None
+        pmra.append(tpmra)
+        epmra.append(tepmra)
+        pmdec.append(tpmdec)
+        epmdec.append(tepmdec)
+    
+        try:
+            tplx = np.float(star[i]['pi'])/1000.
+            teplx = np.float(star[i]['epi'])/1000.
+        except (ValueError, IndexError,KeyError):
+            tplx = None
+            teplx = None
+        plx.append(tplx)
+        eplx.append(teplx)
+
+        try:
+            trv = np.float(star[i]['rv'])
+            terv = np.float(star[i]['erv'])
+        except (ValueError, IndexError,KeyError):
+            trv = None
+            terv = None
+        rv.append(trv)
+        erv.append(terv)
+
+        try:
+            tnote = star[i]['Note']
+        except(ValueError, IndexError,KeyError):
+            tnote = None
+        note.append(tnote)
+
+    return name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note
+
+if __name__ == "__main__":
+    try:
+        infilename = argv[1]
+    except IndexError: 
+        print 'syntax: python lacewing.py inputfile [young] [outfilename] [verbose] [g.o.f.]'
+    try:
+        young = argv[2]
+    except IndexError:
+        young = 'field'
+    try:
+        outfilename = argv[3]
+    except IndexError:
+        outfilename = 'lacewing_output.csv'
+    try:
+        verbose = argv[4]
+    except IndexError:
+        verbose = 'quiet'
+    try:
+        percentages = argv[5]
+    except IndexError:
+        percentages = 'percentage'
+
+    outfile = open(outfilename,'wb')
+    if verbose == "verbose":
+        # verbose output is one line per moving group per entry (1 line per group per star) in CSV format
+        outfile.write('lineno,Name,RA,DEC,Group,d1,probability,d2,sig_pm,kin_pmra,kin_epmra,kin_pmdec,kin_epmdec,pmra,epmra,pmdec,epmdec,d3,sig_dist,kin_dist,kin_edist,dist,edist,d4,sig_rv,kin_rv,kin_erv,rv,erv,d5,sig_pos,sep,note,.\n')
+    else:
+        # regular output is a one line per entry summary, also in .csv form
+        outfile.write('Name,Group,Percent,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps Cha,eta Cha,TW Hya,beta Pic,Octans,Tuc-Hor,Columba,Argus,AB Dor,Pleiades,Her-Lyr,Coma Ber,Ursa Major,Hyades,Note\n')
+    
+    lineno = 1
+
+    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx = csv_loader(infilename)
+
+    moving_groups = moving_group_loader()
+
+    for i in range(len(coord)):
+        out = lacewing(moving_groups, young=young, ra=coord[i].ra.degree,era=era[i],dec=coord[i].dec.degree,edec=edec[i],pmra=pmra[i],epmra=epmra[i],pmdec=pmdec[i],epmdec=epmdec[i],rv=rv[i],erv=erv[i],plx=plx[i],eplx=eplx[i])
+            
         # if verbose output has been selected, print our strings to a file here
         if verbose == "verbose":
-            outfile.write('{11:},"{0:16}",{1:09.5f},{2:+08.5f},{3:+6.4f},{4:+6.4f},{5:12},SIG=,{6: 8.2f},{7:} {8:} {9:} {10:}, .\n'.format(name,ra,dec,pmra,pmdec,mgpname,percent,pm_string,dist_string,rv_string,pos_string,lineno))
-        else:
-            # if regular output was selected, save the info for each moving group for consideration once they're all done.
-            matchgroup.append(mgpname)
-            matchsig.append(percent)
-            matchdist.append(exp_dist)
-            matchedist.append(exp_edist)
-            matchrv.append(exp_rv)
-            matcherv.append(exp_erv)
+            for j in range(len(out)):
+                outfile.write('{0:},{1:},{2:09.5f},{3:+08.5f},{4:12},'.format(lineno,name[i],coord[i].ra.degree,coord[i].dec.degree,out[j]['group']))
+                if percentages == "percentage":
+                    outfile.write('PROB=,{0: 8.0f},'.format(out[j]['probability']))
+                else:
+                    outfile.write('GOF=,{0: 6.2f},'.format(out[j]['gof']))
+                if pmra[i] != None:
+                    outfile.write('PM=,{0: 6.2f}, {1:+6.2f},{2:6.2f}, {3:+6.2f},{4:6.2f}, {5:+6.2f},{6:6.2f}, {7:+6.2f},{8:6.2f},'.format(out[j]['pmsig'],out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.,pmra[i]*1000.,epmra[i]*1000.,pmdec[i]*1000.,epmdec[i]*1000.))
+                else:
+                    outfile.write('PM=,, {0:+6.2f},{1:6.2f},{2:+6.2f},{3:6.2f},,,,,'.format(out[j]['pmsig'],out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.))                    
+                if plx[i] != None:
+                    outfile.write('DIST=,{0: 6.2f}, {1:+8.2f},{2:8.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['distsig'],out[j]['kin_dist'],out[j]['kin_edist'],1/plx[i],eplx[i]/(plx[i]**2)))
+                else:
+                    outfile.write('DIST=,, {0:+8.2f},{1:8.2f},,,'.format(out[j]['kin_dist'],out[j]['kin_edist']))
+                if rv[i] != None:
+                    outfile.write('RV=,{0: 6.2f}, {1:+8.2f},{2:8.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['rvsig'],out[j]['kin_rv'],out[j]['kin_erv'],rv[i],erv[i]))
+                else:
+                    outfile.write('RV=,, {0:+8.2f},{1:8.2f},,,'.format(out[j]['kin_rv'],out[j]['kin_erv']))
+                if (plx[i] != None):
+                    outfile.write('POS=,{0: 6.2f},{1: 8.2f},\n'.format(out[j]['possig'],out[j]['pos_sep']))
+                else:
+                    if (plx[i] == None) & (pmra[i] != None):
+                        outfile.write('KPOS=,{0: 6.2f},{1: 8.2f},\n'.format(out[j]['posksig'],out[j]['pos_ksep']))
+                    else:
+                        outfile.write('POS=,,,')
+                outfile.write('{0:},\n'.format(note[i]))
+                lineno = lineno+1
 
-        lineno = lineno+1
-    # We've finished processing one star. If regular output was selected, create and print the output string.
-    if verbose != "verbose":
-        order = numpy.argsort(matchsig)[::-1]
-        # if even the best match isn't above the threshold of consideration:
-        if matchsig[order[0]] < 20:
-            outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name))
         else:
-            outfile.write('{0:},{1:},{2: 5.2f},{3: 6.2f},{4: 5.2f},{5:+6.2f},{6: 5.2f},'.format(name,matchgroup[order[0]],matchsig[order[0]],matchdist[order[0]],matchedist[order[0]],matchrv[order[0]],matcherv[order[0]]))
-        for j in range(len(moving_groups)):
-            outfile.write('{0: 5.2f},'.format(matchsig[j]))
-        outfile.write('\n')
+            # We've finished processing one star. If regular output was selected, create and print the output string.
+            probs = [out[j]['probability'] for j in range(len(out))]
+            order = np.argsort(probs)[::-1]
+            # if even the best match isn't above the threshold of consideration:
+            if out[order[0]]['probability'] < 20:
+                outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name[i]))
+            else:
+                outfile.write('{0:},{1:},{2: 5.0f},{3: 6.2f},{4: 5.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
+            for k in range(len(out)):
+                outfile.write('{0: 5.2f},'.format(out[k]['probability']))
+            outfile.write('{0:}\n'.format(note[i]))
 
-outfile.close()
+    outfile.close()
+
