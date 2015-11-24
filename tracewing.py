@@ -1,7 +1,8 @@
 from astropy.io import ascii
 from matplotlib import pyplot
 from matplotlib.patches import Polygon
-import numpy
+import numpy as np
+import lacewing
 import kinematics
 import sys
 
@@ -16,11 +17,15 @@ def traceback(argv=None):
     readtable.data.start_line = 1
 
     inputdata = readtable.read(argv[1])
+    withmgp = argv[2]
+    method = argv[3]
+    mgpage = argv[5]
+
     timespan = float(argv[4])
     timestep = -0.1
     n_int = int(argv[6])
 
-    for i in numpy.arange(1,len(inputdata),1):
+    for i in np.arange(1,len(inputdata),1):
         # parse all the input file
         star = inputdata[i]
         #print star
@@ -42,9 +47,6 @@ def traceback(argv=None):
         except ValueError:
             print name
             continue
-        withmgp = argv[2]
-        method = argv[3]
-        mgpage = argv[5]
 
         print name,ra,era,dec,edec,plx,eplx,pmra,epmra,pmdec,epmdec,rv,erv
 
@@ -70,10 +72,10 @@ def traceback(argv=None):
         mgpradmin = ((mgpa - mgpea) * (mgpb - mgpeb) * (mgpc - mgpec))**(1./3.)
         mgpradmax = ((mgpa + mgpea) * (mgpb + mgpeb) * (mgpc + mgpec))**(1./3.)
         # AR 2014.0321 This is to prevent ill-behaved associations like Argus from screwing up everything.
-        mgpradmin[numpy.where(numpy.logical_not(numpy.isfinite(mgpradmin)))] = 0.0
+        mgpradmin[np.where(np.logical_not(np.isfinite(mgpradmin)))] = 0.0
 
-        sigmin = numpy.zeros((4,len(time)))+99999.99
-        sigmax = numpy.zeros((4,len(time)))
+        sigmin = np.zeros((4,len(time)))+99999.99
+        sigmax = np.zeros((4,len(time)))
 
         if method == 'ballistic':
             px,py,pz = kinematics.ballistic_uniform(ra,0,dec,0,1/plx,0,pmra,0,pmdec,0,rv,0,timespan,timestep,1)
@@ -82,7 +84,7 @@ def traceback(argv=None):
         elif method == 'potential':
             px,py,pz = kinematics.potential_uniform(ra,0,dec,0,1/plx,0,pmra,0,pmdec,0,rv,0,timespan,timestep,1)
 
-        distance = numpy.sqrt((px-mgpx)**2 + (py-mgpy)**2 + (pz-mgpz)**2)
+        distance = np.sqrt((px-mgpx)**2 + (py-mgpy)**2 + (pz-mgpz)**2)
         sigmin[0] = distance
         sigmax[0] = distance
 
@@ -96,22 +98,22 @@ def traceback(argv=None):
                 px,py,pz = kinematics.potential_uniform(ra,era*k,dec,edec*k,1/plx,k*eplx/(plx**2),pmra,epmra*k,pmdec,epmdec*k,rv,erv*k,timespan,timestep,n_int)
 
             # We must rotate these so we are slicing across time, not different stars
-            px = numpy.rot90(px,3)
-            py = numpy.rot90(py,3)
-            pz = numpy.rot90(pz,3)
+            px = np.rot90(px,3)
+            py = np.rot90(py,3)
+            pz = np.rot90(pz,3)
             # loop through time
             for j in range(len(time)):
-                distance = numpy.sqrt((px[j]-mgpx[j])**2 + (py[j]-mgpy[j])**2 + (pz[j]-mgpz[j])**2)
-                sigmin[k,j] = numpy.amin(distance)
-                sigmax[k,j] = numpy.amax(distance)
+                distance = np.sqrt((px[j]-mgpx[j])**2 + (py[j]-mgpy[j])**2 + (pz[j]-mgpz[j])**2)
+                sigmin[k,j] = np.amin(distance)
+                sigmax[k,j] = np.amax(distance)
 
         #print sigmin[1]
-        x = numpy.concatenate((time,time[::-1],[time[0]]))
-        y1 = numpy.concatenate((sigmin[1],sigmax[1][::-1],[sigmin[1][0]]))
-        y2 = numpy.concatenate((sigmin[2],sigmax[2][::-1],[sigmin[2][0]]))
-        y3 = numpy.concatenate((sigmin[3],sigmax[3][::-1],[sigmin[3][0]]))
+        x = np.concatenate((time,time[::-1],[time[0]]))
+        y1 = np.concatenate((sigmin[1],sigmax[1][::-1],[sigmin[1][0]]))
+        y2 = np.concatenate((sigmin[2],sigmax[2][::-1],[sigmin[2][0]]))
+        y3 = np.concatenate((sigmin[3],sigmax[3][::-1],[sigmin[3][0]]))
 
-        mg = numpy.concatenate((mgpradmin,mgpradmax[::-1],[mgpradmin[0]]))
+        mg = np.concatenate((mgpradmin,mgpradmax[::-1],[mgpradmin[0]]))
         
         fig = pyplot.figure(figsize=(7,5))
         ax = fig.add_subplot(111)
@@ -133,8 +135,8 @@ def traceback(argv=None):
         ax.set_xlabel('Myr ago')
         ax.set_ylabel('Distance between Star and Moving Group')
         ax.set_title('Traceback for {0:} and {3:}, {4:}'.format(name,ra,dec,withmgp,method))
-#        ax.xaxis.set_ticks(numpy.arange(0,timespan,20))
-        ax.yaxis.set_ticks(numpy.arange(0,160,20))
+#        ax.xaxis.set_ticks(np.arange(0,timespan,20))
+        ax.yaxis.set_ticks(np.arange(0,100,20))
         ax.grid(b=True,which='minor', color="#EFEFEF")
         ax.text(-10,140,'Real Values',color="#000000")
         ax.text(-10,135,'1 $\sigma$',color="#9F9F9F")
