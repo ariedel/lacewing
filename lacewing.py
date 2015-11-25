@@ -505,11 +505,15 @@ if __name__ == "__main__":
                 if pmra[i] != None:
                     outfile.write('PM=,{0: 6.2f}, {1:+6.2f},{2:6.2f}, {3:+6.2f},{4:6.2f}, {5:+6.2f},{6:6.2f}, {7:+6.2f},{8:6.2f},'.format(out[j]['pmsig'],out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.,pmra[i]*1000.,epmra[i]*1000.,pmdec[i]*1000.,epmdec[i]*1000.))
                 else:
-                    outfile.write('PM=,, {0:+6.2f},{1:6.2f},{2:+6.2f},{3:6.2f},,,,,'.format(out[j]['pmsig'],out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.))                    
-                if plx[i] != None:
+                    outfile.write('PM=,, {0:+6.2f},{1:6.2f},{2:+6.2f},{3:6.2f},,,,,'.format(out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.))                    
+                if (plx[i] != None) & (pmra[i] != None):
                     outfile.write('DIST=,{0: 6.2f}, {1: 8.2f},{2:7.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['distsig'],out[j]['kin_dist'],out[j]['kin_edist'],1/plx[i],eplx[i]/(plx[i]**2)))
-                else:
+                elif (plx[i] == None) & (pmra[i] != None):
                     outfile.write('DIST=,, {0: 8.2f},{1:7.2f},,,'.format(out[j]['kin_dist'],out[j]['kin_edist']))
+                elif (plx[i] != None) & (pmra[i] == None):
+                    outfile.write('DIST=,,,, {0: 8.2f},{1:7.2f},'.format(1/plx[i],eplx[i]/(plx[i]**2)))
+                elif (plx[i] == None) & (pmra[i] == None):
+                    outfile.write('DIST=,,,,,,')
                 if rv[i] != None:
                     outfile.write('RV=,{0: 6.2f}, {1:+8.2f},{2:8.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['rvsig'],out[j]['kin_rv'],out[j]['kin_erv'],rv[i],erv[i]))
                 else:
