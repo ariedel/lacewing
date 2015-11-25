@@ -83,37 +83,37 @@ with open(argv[1], 'rb') as f:
         grp = numpy.where(entry[9] == groups)[0][0]
         #print grp
 
-        location = float(entry[2])/step
+        location = float(entry[1])/step
         if location < stop/step:
             total_all[location] += 1
             good_all[grp][location] += 1
                     
-        location = float(entry[3])/step
+        location = float(entry[2])/step
         if location < stop/step:
             total_pm[location] += 1
             good_pm[grp][location] += 1
 
-        location = float(entry[4])/step
+        location = float(entry[3])/step
         if location < stop/step:
             total_dist[location] += 1
             good_dist[grp][location] += 1
 
-        location = float(entry[5])/step
+        location = float(entry[4])/step
         if location < stop/step:
             total_rv[location] += 1
             good_rv[grp][location] += 1
 
-        location = float(entry[6])/step
+        location = float(entry[5])/step
         if location < stop/step:
             total_pmdist[location] += 1
             good_pmdist[grp][location] += 1
 
-        location = float(entry[7])/step
+        location = float(entry[6])/step
         if location < stop/step:
             total_pmrv[location] += 1
             good_pmrv[grp][location] += 1
 
-        location = float(entry[8])/step
+        location = float(entry[7])/step
         if location < stop/step:
             total_distrv[location] += 1
             good_distrv[grp][location] += 1
@@ -121,11 +121,11 @@ with open(argv[1], 'rb') as f:
         i+= 1
 
 # Now identify the moving group we're interested in...
-print entry[1]
-real = numpy.where(entry[1].replace(' ','_') == groups)[0][0]
+print entry[0]
+real = numpy.where(entry[0].replace(' ','_') == groups)[0][0]
 print real
 
-groupname = entry[1].replace(' ','_')
+groupname = entry[0].replace(' ','_')
 
 outfile = open('montecarlo/{0:}{1:}.values'.format(groupname,youth),'wb')
 
