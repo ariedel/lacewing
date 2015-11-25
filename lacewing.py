@@ -240,8 +240,8 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
         epm_new = None
         cosa = None
         sina = None
-        exp_dist = None
-        exp_edist = None
+        exp_dist = 0
+        exp_edist = 0
         pm_sig = None
         rv_sig = None
         dist_sig = None
@@ -487,13 +487,13 @@ if __name__ == "__main__":
     
     lineno = 1
 
-    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx = csv_loader(infilename)
+    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = csv_loader(infilename)
 
     moving_groups = moving_group_loader()
 
     for i in range(len(coord)):
         out = lacewing(moving_groups, young=young, ra=coord[i].ra.degree,era=era[i],dec=coord[i].dec.degree,edec=edec[i],pmra=pmra[i],epmra=epmra[i],pmdec=pmdec[i],epmdec=epmdec[i],rv=rv[i],erv=erv[i],plx=plx[i],eplx=eplx[i])
-            
+
         # if verbose output has been selected, print our strings to a file here
         if verbose == "verbose":
             for j in range(len(out)):
@@ -507,9 +507,9 @@ if __name__ == "__main__":
                 else:
                     outfile.write('PM=,, {0:+6.2f},{1:6.2f},{2:+6.2f},{3:6.2f},,,,,'.format(out[j]['pmsig'],out[j]['kin_pmra']*1000.,out[j]['kin_epmra']*1000.,out[j]['kin_pmdec']*1000.,out[j]['kin_epmdec']*1000.))                    
                 if plx[i] != None:
-                    outfile.write('DIST=,{0: 6.2f}, {1:+8.2f},{2:8.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['distsig'],out[j]['kin_dist'],out[j]['kin_edist'],1/plx[i],eplx[i]/(plx[i]**2)))
+                    outfile.write('DIST=,{0: 6.2f}, {1: 8.2f},{2:7.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['distsig'],out[j]['kin_dist'],out[j]['kin_edist'],1/plx[i],eplx[i]/(plx[i]**2)))
                 else:
-                    outfile.write('DIST=,, {0:+8.2f},{1:8.2f},,,'.format(out[j]['kin_dist'],out[j]['kin_edist']))
+                    outfile.write('DIST=,, {0: 8.2f},{1:7.2f},,,'.format(out[j]['kin_dist'],out[j]['kin_edist']))
                 if rv[i] != None:
                     outfile.write('RV=,{0: 6.2f}, {1:+8.2f},{2:8.2f},{3:+8.2f},{4:8.2f},'.format(out[j]['rvsig'],out[j]['kin_rv'],out[j]['kin_erv'],rv[i],erv[i]))
                 else:
@@ -532,7 +532,7 @@ if __name__ == "__main__":
             if out[order[0]]['probability'] < 20:
                 outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name[i]))
             else:
-                outfile.write('{0:},{1:},{2: 5.0f},{3: 6.2f},{4: 5.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
+                outfile.write('{0:},{1:},{2: 5.0f},{3: 8.2f},{4:7.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
             for k in range(len(out)):
                 outfile.write('{0: 5.2f},'.format(out[k]['probability']))
             outfile.write('{0:}\n'.format(note[i]))
