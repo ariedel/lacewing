@@ -189,7 +189,6 @@ def greatcircle(ra,dec,pmra,pmdec):
    decp=numpy.arcsin(z/r)
 #   if decp gt !pi/2. then decp=!pi/2.-decp
    
-#   print astrotools.deg2HMS(ra=ra),astrotools.deg2HMS(dec=dec),astrotools.deg2HMS(ra=(ra+pmra/3600./numpy.cos(dec))),astrotools.deg2HMS(dec=dec+pmdec/3600.),astrotools.deg2HMS(ra=rap*radeg),astrotools.deg2HMS(dec=decp*radeg)
     # angular distance between star and equatorial pole (ie, the dec)
    dlon=(90-dec)/radeg
    sdp = numpy.sin(decp)
@@ -209,3 +208,41 @@ def greatcircle(ra,dec,pmra,pmdec):
 
    return ragc,decgc
 
+#Original IDL code by John Subasavage, translated to Python/Numpy by Adric Riedel
+def spheresep(ra1,dec1,ra2,dec2):
+    radeg = 180/numpy.pi
+    
+    ra1 = ra1/radeg
+    ra2 = ra2/radeg
+    dec1 = dec1/radeg
+    dec2 = dec2/radeg
+    
+    diffra=numpy.abs(ra1-ra2)
+    diffdec=numpy.abs(dec1-dec2)
+
+############################################################
+#  
+#  Calculate separation (law of cosines)
+#
+############################################################
+
+    sepa=numpy.arccos((numpy.sin(dec1)*numpy.sin(dec2))+numpy.cos(dec1)*numpy.cos(dec2)*numpy.cos(diffra))
+
+############################################################
+#
+#  Calculate position angle
+#
+############################################################
+
+    posang=numpy.arcsin((numpy.sin(diffra)*numpy.sin((numpy.pi/2.)-dec2))/sepa)
+
+    try:
+        if posang < 0:
+            posang = posang + numpy.pi*2
+    except ValueError:
+        flip = numpy.where(posang < 0)
+        posang[flip] = posang[flip] + numpy.pi*2
+               
+    sepa = sepa*radeg
+    posang = posang*radeg
+    return sepa,posang
