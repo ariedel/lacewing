@@ -480,10 +480,10 @@ if __name__ == "__main__":
     outfile = open(outfilename,'wb')
     if verbose == "verbose":
         # verbose output is one line per moving group per entry (1 line per group per star) in CSV format
-        outfile.write('lineno,Name,RA,DEC,Group,d1,probability,d2,sig_pm,kin_pmra,kin_epmra,kin_pmdec,kin_epmdec,pmra,epmra,pmdec,epmdec,d3,sig_dist,kin_dist,kin_edist,dist,edist,d4,sig_rv,kin_rv,kin_erv,rv,erv,d5,sig_pos,sep,note,.\n')
+        outfile.write('lineno,Name,RA,DEC,Group,d1,Probability,d2,sig_pm,kin_pmra,kin_epmra,kin_pmdec,kin_epmdec,pmra,epmra,pmdec,epmdec,d3,sig_dist,kin_dist,kin_edist,dist,edist,d4,sig_rv,kin_rv,kin_erv,rv,erv,d5,sig_pos,sep,Note,.\n')
     else:
         # regular output is a one line per entry summary, also in .csv form
-        outfile.write('Name,Group,Percent,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps Cha,eta Cha,TW Hya,beta Pic,Octans,Tuc-Hor,Columba,Argus,AB Dor,Pleiades,Her-Lyr,Coma Ber,Ursa Major,Hyades,Note\n')
+        outfile.write('Name,Note,Group,Probability,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps Cha,eta Cha,TW Hya,beta Pic,Octans,Tuc-Hor,Columba,Argus,AB Dor,Pleiades,Her-Lyr,Coma Ber,Ursa Major,Hyades,\n')
     
     lineno = 1
 
@@ -519,10 +519,10 @@ if __name__ == "__main__":
                 else:
                     outfile.write('RV=,, {0:+8.2f},{1:8.2f},,,'.format(out[j]['kin_rv'],out[j]['kin_erv']))
                 if (plx[i] != None):
-                    outfile.write('POS=,{0: 6.2f},{1: 8.2f},\n'.format(out[j]['possig'],out[j]['pos_sep']))
+                    outfile.write('POS=,{0: 6.2f},{1: 8.2f},'.format(out[j]['possig'],out[j]['pos_sep']))
                 else:
                     if (plx[i] == None) & (pmra[i] != None):
-                        outfile.write('KPOS=,{0: 6.2f},{1: 8.2f},\n'.format(out[j]['posksig'],out[j]['pos_ksep']))
+                        outfile.write('KPOS=,{0: 6.2f},{1: 8.2f},'.format(out[j]['posksig'],out[j]['pos_ksep']))
                     else:
                         outfile.write('POS=,,,')
                 outfile.write('{0:},\n'.format(note[i]))
@@ -534,12 +534,12 @@ if __name__ == "__main__":
             order = np.argsort(probs)[::-1]
             # if even the best match isn't above the threshold of consideration:
             if out[order[0]]['probability'] < 20:
-                outfile.write('{0:},(None),    ,    ,    ,    ,    ,'.format(name[i]))
+                outfile.write('{0:},{1:},(None),,,,,,'.format(name[i],note[i]))
             else:
-                outfile.write('{0:},{1:},{2: 5.0f},{3: 8.2f},{4:7.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
+                outfile.write('{0:},{1:},{2: 5.0f},{3: 8.2f},{4:7.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],note[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
             for k in range(len(out)):
                 outfile.write('{0: 5.2f},'.format(out[k]['probability']))
-            outfile.write('{0:}\n'.format(note[i]))
+            outfile.write('\n')
 
     outfile.close()
 
