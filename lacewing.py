@@ -15,8 +15,8 @@ import ellipse
 ###############################################
 
 ###############################################
-### LACEwING 1.3
-### ARR 2015-10-16
+### LACEwING 1.4
+### ARR 2016-01-04
 ### 1.0: Everything
 ### 1.1: Removed dependence on GROUP columns in input data table
 ###      Fixed dependency on astrometry module
@@ -26,6 +26,8 @@ import ellipse
 ###      Number of groups loaded is now controlled by input .csv file
 ### 1.3: The LACEwING algorithm is now a separate function from the
 ###      moving group loader and the csv file reader function.
+### 1.4: CSV loader now optionally understands the AAS-journal-style
+###      headers in the catalog
 ###############################################
 
 ######################################################
@@ -395,7 +397,10 @@ def csv_loader(infilename):
         try:
             tcoord = SkyCoord(ra=star[i]['RA'],dec=star[i]['DEC'], unit=(u.degree,u.degree))
         except (ValueError,IndexError,KeyError):
-            tcoord = SkyCoord('{0:} {1:} {2:} {3:} {4:} {5:}'.format(star[i]['Rah'],star[i]['Ram'],star[i]['Ras'],star[i]['DECd'],star[i]['DECm'],star[i]['DECs']), unit=(u.hourangle, u.deg))
+            try:
+                tcoord = SkyCoord(ra=star[i]['RAdeg'],dec=star[i]['DEdeg'], unit=(u.degree,u.degree))
+            except (ValueError,IndexError,KeyError):
+                tcoord = SkyCoord('{0:} {1:} {2:} {3:}{4:} {5:} {6:}'.format(star[i]['RAh'],star[i]['RAm'],star[i]['RAs'],star[i]['DE-'],star[i]['DEd'],star[i]['DEm'],star[i]['DEs']), unit=(u.hourangle, u.deg))
 
         coord.append(tcoord)
 
@@ -403,8 +408,12 @@ def csv_loader(infilename):
             tera = np.float(star[i]['eRA'])/1000./3600.
             tedec = np.float(star[i]['eDEC'])/1000./3600.
         except (ValueError,IndexError,KeyError):
-            tera = 1.0/3600.
-            tedec = 1.0/3600.
+            try:
+                tera = np.float(star[i]['e_RAdeg'])/1000./3600.
+                tedec = np.float(star[i]['e_DEdeg'])/1000./3600.
+            except (ValueError,IndexError,KeyError):
+                tera = 1.0/3600.
+                tedec = 1.0/3600.
         era.append(tera)
         edec.append(tedec)
     
@@ -414,16 +423,22 @@ def csv_loader(infilename):
             tpmdec = np.float(star[i]['pmDEC'])/1000.
             tepmdec = np.float(star[i]['epmDEC'])/1000.
         except (ValueError,IndexError,KeyError):
-          try:
-              tpmra = np.float(star[i]['pmRA'])/1000.
-              tepmra = 0.01
-              tpmdec = np.float(star[i]['pmDEC'])/1000.
-              tepmdec = 0.01
-          except (ValueError,IndexError,KeyError):
-              tpmra = None
-              tepmra = None
-              tpmdec = None
-              tepmdec = None
+            try:
+                tpmra = np.float(star[i]['pmRA'])/1000.
+                tepmra = np.float(star[i]['e_pmRA'])/1000.
+                tpmdec = np.float(star[i]['pmDE'])/1000.
+                tepmdec = np.float(star[i]['e_pmDE'])/1000.
+            except (ValueError,IndexError,KeyError):
+                try:
+                    tpmra = np.float(star[i]['pmRA'])/1000.
+                    tepmra = 0.01
+                    tpmdec = np.float(star[i]['pmDEC'])/1000.
+                    tepmdec = 0.01
+                except (ValueError,IndexError,KeyError):
+                    tpmra = None
+                    tepmra = None
+                    tpmdec = None
+                    tepmdec = None
         pmra.append(tpmra)
         epmra.append(tepmra)
         pmdec.append(tpmdec)
@@ -433,8 +448,12 @@ def csv_loader(infilename):
             tplx = np.float(star[i]['pi'])/1000.
             teplx = np.float(star[i]['epi'])/1000.
         except (ValueError, IndexError,KeyError):
-            tplx = None
-            teplx = None
+            try:
+                tplx = np.float(star[i]['plx'])/1000.
+                teplx = np.float(star[i]['e_plx'])/1000.
+            except (ValueError, IndexError,KeyError):
+                tplx = None
+                teplx = None
         plx.append(tplx)
         eplx.append(teplx)
 
@@ -442,8 +461,12 @@ def csv_loader(infilename):
             trv = np.float(star[i]['rv'])
             terv = np.float(star[i]['erv'])
         except (ValueError, IndexError,KeyError):
-            trv = None
-            terv = None
+            try:
+                trv = np.float(star[i]['HRV'])
+                terv = np.float(star[i]['e_HRV'])
+            except (ValueError, IndexError,KeyError):
+                trv = None
+                terv = None
         rv.append(trv)
         erv.append(terv)
 
@@ -536,7 +559,7 @@ if __name__ == "__main__":
             if out[order[0]]['probability'] < 20:
                 outfile.write('{0:},{1:},(None),,,,,,'.format(name[i],note[i]))
             else:
-                outfile.write('{0:},{1:},{2: 5.0f},{3: 8.2f},{4:7.2f},{5:+6.2f},{6: 5.2f},'.format(name[i],note[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
+                outfile.write('{0:},{1:},{2:},{3: 5.0f},{4: 8.2f},{5:7.2f},{6:+6.2f},{7: 5.2f},'.format(name[i],note[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
             for k in range(len(out)):
                 outfile.write('{0: 5.2f},'.format(out[k]['probability']))
             outfile.write('\n')
