@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import kinematics
+#from matplotlib import pyplot as plt
 
 #  Functions in this module:
 # fitellipse: Fits a 3D ellipsoid by performing linear fits to successive planes of the 3D array, derotating the ellipsoid each time. 
@@ -71,12 +72,17 @@ def fitellipse(x,y,z):
     # sanity check: If this was done correctly, vec3 should be identical to vec.
     vec = np.dot(rotmatrix,vec0)
 
+    #ax1.hist(vec[0])
+    #ax2.hist(vec[1])
+    #ax3.hist(vec[2])
+
+
     # now obtain the standard deviations
     stda = np.std(vec[0],ddof=1)
     stdb = np.std(vec[1],ddof=1)
     stdc = np.std(vec[2],ddof=1)
 
-    return {'x':meanx,'y':meany,'z':meanz,'a':stda,'b':stdb,'c':stdc,'xy':anglexy,'xz':anglexz,'yz':angleyz}
+    return {'x':meanx,'y':meany,'z':meanz,'a':stda,'b':stdb,'c':stdc,'xy':anglexy,'xz':anglexz,'yz':angleyz}#,ax1,ax2,ax3
 
 def fitellipse2d(x,y):
 
