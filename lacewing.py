@@ -15,8 +15,8 @@ import ellipse
 ###############################################
 
 ###############################################
-### LACEwING 1.4
-### ARR 2016-01-04
+### LACEwING 1.5
+### ARR 2016-07-05
 ### 1.0: Everything
 ### 1.1: Removed dependence on GROUP columns in input data table
 ###      Fixed dependency on astrometry module
@@ -28,6 +28,8 @@ import ellipse
 ###      moving group loader and the csv file reader function.
 ### 1.4: CSV loader now optionally understands the AAS-journal-style
 ###      headers in the catalog
+### 1.5: Now handles the case of multiple "field" populations correctly
+###      and also different numbers/orders of groups
 ###############################################
 
 ######################################################
@@ -232,7 +234,7 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
 
     output = []
 
-    for i in range(len(moving_groups)-1): # because the last moving group is "field"
+    for i in range(len(moving_groups)):
         mgp = moving_groups[i]
         # this routine computes the expected pm (at 10 parsecs) and RV given an RA and DEC.
         exp_pmra,exp_epmra,exp_pmdec,exp_epmdec,exp_rv,exp_erv = converge(mgp,ra,era,dec,edec,iterate)
@@ -500,19 +502,26 @@ if __name__ == "__main__":
     except IndexError:
         percentages = 'percentage'
 
+    lineno = 1
+
+    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = csv_loader(infilename)
+
+    moving_groups = moving_group_loader()
+
+    moving_groups = [moving_groups[x] for x in range(len(moving_groups)) if moving_groups[x].name != "Field"]
+
     outfile = open(outfilename,'wb')
     if verbose == "verbose":
         # verbose output is one line per moving group per entry (1 line per group per star) in CSV format
         outfile.write('lineno,Name,RA,DEC,Group,d1,Probability,d2,sig_pm,kin_pmra,kin_epmra,kin_pmdec,kin_epmdec,pmra,epmra,pmdec,epmdec,d3,sig_dist,kin_dist,kin_edist,dist,edist,d4,sig_rv,kin_rv,kin_erv,rv,erv,d5,sig_pos,sep,Note,.\n')
     else:
         # regular output is a one line per entry summary, also in .csv form
-        outfile.write('Name,Note,Group,Probability,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,eps Cha,eta Cha,TW Hya,beta Pic,Octans,Tuc-Hor,Columba,Argus,AB Dor,Pleiades,Her-Lyr,Coma Ber,Ursa Major,Hyades,\n')
+        outfile.write('Name,Note,Group,Probability,Predicted Dist,Predicted Dist uncertainty,Predicted RV,Predicted RV uncertainty,')
+        for i in range(len(moving_groups)):
+            outfile.write('{0:},'.format(moving_groups[i].name))
+        outfile.write('\n')
     
-    lineno = 1
 
-    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = csv_loader(infilename)
-
-    moving_groups = moving_group_loader()
 
     for i in range(len(coord)):
         out = lacewing(moving_groups, young=young, ra=coord[i].ra.degree,era=era[i],dec=coord[i].dec.degree,edec=edec[i],pmra=pmra[i],epmra=epmra[i],pmdec=pmdec[i],epmdec=epmdec[i],rv=rv[i],erv=erv[i],plx=plx[i],eplx=eplx[i])

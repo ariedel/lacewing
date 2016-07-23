@@ -1,6 +1,6 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import pyplot
+#from mpl_toolkits.mplot3d import Axes3D
+#from matplotlib import pyplot
 #from matplotlib import cm
 from matplotlib.patches import Ellipse
 import kinematics
@@ -13,7 +13,7 @@ def traceback(argv=None):
     if argv is None:
         argv = sys.argv
         
-    name,coords,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,pi,epi = lacewing.csv_loader(argv[1])
+    name,coords,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,pi,epi,note = lacewing.csv_loader(argv[1])
     mgpname = argv[2]
     n_init = int(argv[3])
     #print name,era
@@ -60,7 +60,7 @@ def traceback(argv=None):
     xzlist = []
     yzlist = []
     outfile = open("Moving_Group_{0:}_2d.dat".format(mgpname).replace(' ','_'),"wb")
-    outfile.write("Time X eX Y eY Z eZ A eA B eB C eC XY eXY XZ eXZ YZ eYZ\n")
+    outfile.write("U,V,W,A,B,C,UV,UW,VW,X,Y,Z,D,E,G,XY,XZ,YZ\n")
     for j in xrange(n_init):
         tra = ra + (np.random.randn(n_stars)*era)*np.cos(dec*np.pi/180.)
         tdec = dec + np.random.randn(n_stars)*edec
@@ -127,8 +127,8 @@ def traceback(argv=None):
     ef = np.std([xzlist[m]['b'] for m in range(n_init)],ddof=1)
 
         #Output all the particulars of the moving group at this timestep T.
-    outfile.write("{0:8.1f}     {1:12.3f} {2:12.3f}  {3:12.3f} {4:12.3f}  {5:12.3f} {6:12.3f}   {7:12.4f} {8:12.4f}  {9:12.4f} {10:12.4f}  {11:12.4f} {12:12.4f}   {13:12.4f} {14:12.4f}  {15:12.4f} {16:12.4f}  {17:12.4f} {18:12.4f}\n".format(0,u,v,w,a,b,c,uv,uw,vw,x,y,z,d,e,f,xy,xz,yz))
-    outfile.write("{0:8.1f}     {1:12.3f} {2:12.3f}  {3:12.3f} {4:12.3f}  {5:12.3f} {6:12.3f}   {7:12.4f} {8:12.4f}  {9:12.4f} {10:12.4f}  {11:12.4f} {12:12.4f}   {13:12.4f} {14:12.4f}  {15:12.4f} {16:12.4f}  {17:12.4f} {18:12.4f}\n".format(0,eu,ev,ew,ea,eb,ec,euv,euw,evw,ex,ey,ez,ed,ee,ef,exy,exz,eyz))
+    outfile.write("{0:12.3f},{1:12.3f},{2:12.3f},{3:12.3f},{4:12.3f},{5:12.3f},{6:12.4f},{7:12.4f},{8:12.4f},{9:12.4f},{10:12.4f},{11:12.4f},{12:12.4f},{13:12.4f},{14:12.4f},{15:12.4f},{16:12.4f},{17:12.4f}\n".format(u,v,w,a,b,c,uv,uw,vw,x,y,z,d,e,f,xy,xz,yz))
+    outfile.write("{0:12.3f},{1:12.3f},{2:12.3f},{3:12.3f},{4:12.3f},{5:12.3f},{6:12.4f},{7:12.4f},{8:12.4f},{9:12.4f},{10:12.4f},{11:12.4f},{12:12.4f},{13:12.4f},{14:12.4f},{15:12.4f},{16:12.4f},{17:12.4f}\n".format(eu,ev,ew,ea,eb,ec,euv,euw,evw,ex,ey,ez,ed,ee,ef,exy,exz,eyz))
 
     outfile.close()
 
