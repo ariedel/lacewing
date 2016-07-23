@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot
 #from matplotlib import cm
@@ -20,7 +20,7 @@ def save(fig,filename):
     #We have to work around 'fig.canvas.print_png', etc calling 'draw'
     renderer = fig.canvas.renderer
     with open(filename,'w') as outfile:
-        _png.write_png(renderer._renderer.buffer_rgba(),renderer.width,renderer.height,outfile,fig.dpi)
+        _png.write_png(renderer._renderer,outfile,fig.dpi)
 
 def traceback(argv=None):
     if argv is None:
@@ -28,32 +28,32 @@ def traceback(argv=None):
         
     mgpname = argv[2]
     method = argv[3]
-    mgpage = numpy.float(argv[4])
+    mgpage = np.float(argv[4])
+    mgpage2 = np.float(argv[5])
 
-    timespan = numpy.float(argv[5])
+    timespan = np.float(argv[6])
     timestep = -0.1
     n_int = 1000
+    full_timespan = -800
    
     readtable = ascii.get_reader(Reader=ascii.Basic)
     readtable.header.splitter.delimiter = ','
     readtable.data.splitter.delimiter = ','
     readtable.header.start_line = 0
-    readtable.data.start_line = 1
+    readtable.data.start_line = 0
 
     young = readtable.read(argv[1])
    
-    # How many stars are we fitting? Find all that are bona fide members (quality is "Good")
-    n_stars=0
-
-    n_stars = len(numpy.where(numpy.bitwise_and(astrometry.isnumber(young['rv']),astrometry.isnumber(young['pi'])))[0])
+    # How many stars are we fitting? 
+    n_stars = len(np.where(np.bitwise_and(astrometry.isnumber(young['HRV']),astrometry.isnumber(young['plx'])))[0])
 
     print n_stars
 
     # it saves time and memory to make arrays in advance, even in python
-    # Set dtype=numpy.float32 to save memory
-    mgp_x = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
-    mgp_y = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
-    mgp_z = numpy.zeros((n_stars,n_int,6000),dtype=numpy.float32)
+    # Set dtype=np.float32 to save memory
+    mgp_x = np.zeros((n_stars,n_int,np.int(np.ceil(full_timespan/timestep))),dtype=np.float32)
+    mgp_y = np.zeros((n_stars,n_int,np.int(np.ceil(full_timespan/timestep))),dtype=np.float32)
+    mgp_z = np.zeros((n_stars,n_int,np.int(np.ceil(full_timespan/timestep))),dtype=np.float32)
     # These are for the 3D movie version
     mgp_size = []
     #mgp_color = []
@@ -65,12 +65,12 @@ def traceback(argv=None):
 
     n = 0
     for i in xrange(len(young)):
-        if isinstance(young[i]['RA'], numpy.ma.core.MaskedConstant):
+        if isinstance(young[i]['RAdeg'], np.ma.core.MaskedConstant):
             continue
         else:
             try:
-                #if isinstance(young[i]['SpType'], numpy.ma.core.MaskedConstant):
-                #    if isinstance(young[i]['V-K'], numpy.ma.core.MaskedConstant):
+                #if isinstance(young[i]['SpType'], np.ma.core.MaskedConstant):
+                #    if isinstance(young[i]['V-K'], np.ma.core.MaskedConstant):
                 #        size=20
                 #        color='#000000'
                 #    else:
@@ -127,18 +127,18 @@ def traceback(argv=None):
                 #    elif young[i]['SpType'][0] == 'L':
                 #        size = 5
                 #        color = "#FF0000"
-                ra =   float(young[i]['RA'])
-                era =  float(young[i]['eRA'])/3600000
-                dec =  float(young[i]['DEC'])
-                edec = float(young[i]['eDEC'])/3600000
-                dist = 1000/float(young[i]['pi'])
-                edist = float(young[i]['epi'])/float(young[i]['pi'])*dist
+                ra =   float(young[i]['RAdeg'])
+                era =  float(young[i]['e_RAdeg'])/3600000
+                dec =  float(young[i]['DEdeg'])
+                edec = float(young[i]['e_DEdeg'])/3600000
+                dist = 1000/float(young[i]['plx'])
+                edist = float(young[i]['e_plx'])/float(young[i]['plx'])*dist
                 pmra = float(young[i]['pmRA'])/1000.
-                epmra = float(young[i]['epmRA'])/1000.
-                pmdec = float(young[i]['pmDEC'])/1000.
-                epmdec = float(young[i]['epmDEC'])/1000.
-                rv =   float(young[i]['rv'])
-                erv =  float(young[i]['erv'])
+                epmra = float(young[i]['e_pmRA'])/1000.
+                pmdec = float(young[i]['pmDE'])/1000.
+                epmdec = float(young[i]['e_pmDE'])/1000.
+                rv =   float(young[i]['HRV'])
+                erv =  float(young[i]['e_HRV'])
                 print n, young[i]['Name'],ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv
             except ValueError:
                 continue
@@ -155,11 +155,11 @@ def traceback(argv=None):
                 ###############################################################
                     
             if method == 'ballistic':
-                px,py,pz = kinematics.ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
+                px,py,pz = kinematics.ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
             elif method == 'epicyclic':
-                px,py,pz = kinematics.epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
+                px,py,pz = kinematics.epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
             elif method == 'potential':
-                px,py,pz = kinematics.potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,-600,timestep,n_int)
+                px,py,pz = kinematics.potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
             # store these iterations
             mgp_x[n] = px
             mgp_y[n] = py
@@ -180,10 +180,10 @@ def traceback(argv=None):
     ################################################
 
     # AR 2014.0319: Based on an idea from Adrian Price-Whelan, rather than calculating the full tracebacks of n*1000 stars over X Myr, I'm going to calculate 1000 tracebacks of n stars over X Myr.  
-    mgp_x = numpy.asarray(mgp_x,dtype=numpy.float32)
-    mgp_y = numpy.asarray(mgp_y,dtype=numpy.float32)
-    mgp_z = numpy.asarray(mgp_z,dtype=numpy.float32)
-    times = numpy.arange(0,-600,timestep)
+    mgp_x = np.asarray(mgp_x,dtype=np.float32)
+    mgp_y = np.asarray(mgp_y,dtype=np.float32)
+    mgp_z = np.asarray(mgp_z,dtype=np.float32)
+    times = np.arange(0,full_timespan,timestep)
     ## output positions of individual stars as a function of time.
     #for s in range(len(times)):
     #    outfile = open("mgp_{0:}_{1:}_{2:}.csv".format(mgpname,method,times[s]),"wb")
@@ -203,24 +203,24 @@ def traceback(argv=None):
             # this is one ellipse per monte carlo iteration
             obj = ellipse.fitellipse(mgp_x[:,j,k],mgp_y[:,j,k],mgp_z[:,j,k])
             objlist.append(obj)
-        x = numpy.mean([objlist[m]['x'] for m in range(n_int)])
-        y = numpy.mean([objlist[m]['y'] for m in range(n_int)])
-        z = numpy.mean([objlist[m]['z'] for m in range(n_int)])
-        xy = numpy.mean([objlist[m]['xy'] for m in range(n_int)])
-        xz = numpy.mean([objlist[m]['xz'] for m in range(n_int)])
-        yz= numpy.mean([objlist[m]['yz'] for m in range(n_int)])
-        a = numpy.mean([objlist[m]['a'] for m in range(n_int)])
-        b = numpy.mean([objlist[m]['b'] for m in range(n_int)])
-        c = numpy.mean([objlist[m]['c'] for m in range(n_int)])
-        ex = numpy.std([objlist[m]['x'] for m in range(n_int)],ddof=1)
-        ey = numpy.std([objlist[m]['y'] for m in range(n_int)],ddof=1)
-        ez = numpy.std([objlist[m]['z'] for m in range(n_int)],ddof=1)
-        exy = numpy.std([objlist[m]['xy'] for m in range(n_int)],ddof=1)
-        exz = numpy.std([objlist[m]['xz'] for m in range(n_int)],ddof=1)
-        eyz= numpy.std([objlist[m]['yz'] for m in range(n_int)],ddof=1)
-        ea = numpy.std([objlist[m]['a'] for m in range(n_int)],ddof=1)
-        eb = numpy.std([objlist[m]['b'] for m in range(n_int)],ddof=1)
-        ec = numpy.std([objlist[m]['c'] for m in range(n_int)],ddof=1)
+        x = np.mean([objlist[m]['x'] for m in range(n_int)])
+        y = np.mean([objlist[m]['y'] for m in range(n_int)])
+        z = np.mean([objlist[m]['z'] for m in range(n_int)])
+        xy = np.mean([objlist[m]['xy'] for m in range(n_int)])
+        xz = np.mean([objlist[m]['xz'] for m in range(n_int)])
+        yz= np.mean([objlist[m]['yz'] for m in range(n_int)])
+        a = np.mean([objlist[m]['a'] for m in range(n_int)])
+        b = np.mean([objlist[m]['b'] for m in range(n_int)])
+        c = np.mean([objlist[m]['c'] for m in range(n_int)])
+        ex = np.std([objlist[m]['x'] for m in range(n_int)],ddof=1)
+        ey = np.std([objlist[m]['y'] for m in range(n_int)],ddof=1)
+        ez = np.std([objlist[m]['z'] for m in range(n_int)],ddof=1)
+        exy = np.std([objlist[m]['xy'] for m in range(n_int)],ddof=1)
+        exz = np.std([objlist[m]['xz'] for m in range(n_int)],ddof=1)
+        eyz= np.std([objlist[m]['yz'] for m in range(n_int)],ddof=1)
+        ea = np.std([objlist[m]['a'] for m in range(n_int)],ddof=1)
+        eb = np.std([objlist[m]['b'] for m in range(n_int)],ddof=1)
+        ec = np.std([objlist[m]['c'] for m in range(n_int)],ddof=1)
 
         # We're re-saving a dictionary of one ellipse per TIMESTEP so that we can make a 3D plot of it later.
         mgpmaster.append({'x':x,'ex':ex,'y':y,'ey':ey,'z':z,'ez':ez,'xy':xy,'exy':exy,'xz':xz,'exz':exz,'yz':yz,'eyz':eyz,'a':a,'ea':ea,'b':b,'eb':eb,'c':c,'ec':ec})
@@ -236,17 +236,17 @@ def traceback(argv=None):
     #####################################################
 
     # flatten by one dimension; we now have N*I stars at every time T.
-    mgp_x = numpy.reshape(mgp_x,(n_stars*n_int,6000))
-    mgp_y = numpy.reshape(mgp_y,(n_stars*n_int,6000))
-    mgp_z = numpy.reshape(mgp_z,(n_stars*n_int,6000))
+    mgp_x = np.reshape(mgp_x,(n_stars*n_int,np.ceil(full_timespan/timestep)))
+    mgp_y = np.reshape(mgp_y,(n_stars*n_int,np.ceil(full_timespan/timestep)))
+    mgp_z = np.reshape(mgp_z,(n_stars*n_int,np.ceil(full_timespan/timestep)))
     
-    # rotate so that each strip contains n_stars*n_int elements for a given time.
-    # (it's easier to plot)
-    mgp_x = numpy.rot90(mgp_x,3)
-    mgp_y = numpy.rot90(mgp_y,3)
-    mgp_z = numpy.rot90(mgp_z,3)
-    times = numpy.rot90([times],3)
-    #mgp_color = numpy.reshape(mgp_color,-1)
+    ## rotate so that each strip contains n_stars*n_int elements for a given time.
+    ## (it's easier to plot)
+    #mgp_x = np.rot90(mgp_x,3)
+    #mgp_y = np.rot90(mgp_y,3)
+    #mgp_z = np.rot90(mgp_z,3)
+    #times = np.rot90([times],3)
+    #mgp_color = np.reshape(mgp_color,-1)
 
     #######################################################
     ### Draw a traceback plot of all N*I stars relative ###
@@ -255,9 +255,9 @@ def traceback(argv=None):
     ###             "waterfall diagram"                 ###
     #######################################################
 
-    fig2 = pyplot.figure(figsize=(9.6,5.4),dpi=200)
+    fig2 = pyplot.figure(figsize=(9.6,5.4),dpi=600)
     ax2 = fig2.add_subplot(111)
-    ax2.set_ylim((0,100))
+    ax2.set_ylim((0,200))
     ax2.set_xlim((0,timespan))
     ax2.set_xlabel('Time (Myr)')
     ax2.set_ylabel('(pc)')
@@ -282,15 +282,20 @@ def traceback(argv=None):
         x.append(mgpmaster[q]["x"])
         y.append(mgpmaster[q]["y"])
         z.append(mgpmaster[q]["z"])
-    a = numpy.asarray(a)
-    b = numpy.asarray(b)
-    c = numpy.asarray(c)
-    x = numpy.asarray(x)
-    y = numpy.asarray(y)
-    z = numpy.asarray(z)
-    for p in numpy.arange(0,n_stars*n_int,3):
-        mgpdist = numpy.sqrt((mgp_x[:,p] - x)**2 + (mgp_y[:,p] - y)**2 + (mgp_z[:,p] - z)**2)
-        line.set_data(times,mgpdist)
+    a = np.asarray(a)
+    b = np.asarray(b)
+    c = np.asarray(c)
+    x = np.asarray(x)
+    y = np.asarray(y)
+    z = np.asarray(z)
+    print a
+    if n_stars*n_int > 30000:
+        p = np.asarray(np.ceil(np.random.rand(30000)*(n_stars*n_int-1)),np.int)
+    else:
+        p = np.arange(0,(n_stars*n_int-1),1)
+    mgpdist = np.sqrt((mgp_x[p,:] - x)**2 + (mgp_y[p,:] - y)**2 + (mgp_z[p,:] - z)**2)
+    for cntr in range(len(mgpdist)):
+        line.set_data(times,mgpdist[cntr])
         line.set_linewidth(0.2)
         line.set_color((0,0,0,0.05))
         ax2.draw_artist(line)
@@ -299,18 +304,18 @@ def traceback(argv=None):
     line.set_linewidth(1)
     ax2.draw_artist(line)
 
-    x = numpy.concatenate((times,times[::-1],[times[0]]))
+    x = np.concatenate((times,times[::-1],[times[0]]))
         
     mgprad = (a*b*c)**(1/3.)
-    mg = numpy.concatenate((mgprad,numpy.zeros_like(mgprad),[mgprad[0]]))
+    mg = np.concatenate((mgprad,np.zeros_like(mgprad),[mgprad[0]]))
     poly.set_xy(zip(*(x,mg)))
     poly.set_facecolor((1,0,0,0.2))
     ax2.draw_artist(poly)
 
-    line.set_data([mgpage,mgpage],[0,500])
-    line.set_color((1,0,0,1))
-    line.set_linewidth(1)
-    ax2.draw_artist(line)
+    poly.set_xy(zip(*([mgpage,mgpage,mgpage2,mgpage2,mgpage],[0,500,500,0,0])))
+    poly.set_facecolor((0,0,1,0.2))
+    ax2.draw_artist(poly)
+
     save(fig2,'Trace_{0:}_{1:}.png'.format(mgpname,method))
     fig2.clf()
     pyplot.close()
