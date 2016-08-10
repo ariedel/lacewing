@@ -2,7 +2,6 @@ import numpy as np
 from matplotlib import pyplot
 from matplotlib import cm
 from matplotlib.patches import Ellipse
-#from matplotlib import font_manager
 import astropy.io.ascii as ascii
 from sys import argv
 import astrometry
@@ -15,8 +14,6 @@ import lacewing
 ### MAIN ROUTINE
 ###################################
 ###################################
-
-#prop = font_manager.FontProperties(fname='/home/riedel/Arial.ttf')
 
 try:
     infilename = argv[1]
@@ -34,8 +31,10 @@ except IndexError:
    XYZ = False
 
 moving_groups = lacewing.moving_group_loader()
+moving_groups = [moving_groups[x] for x in range(len(moving_groups)) if moving_groups[x].name != "Field"]
 
 name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = lacewing.csv_loader(infilename)
+print name
 
 outfile = open(outname,'wb')
 
@@ -116,7 +115,6 @@ for i in xrange(len(coord)):
             result[j][k][17] = objYZ['xy'] 
 
 
-    #    print result[0][:][1]
     result = zip(*result)
     if distlen == 1 and rvlen != 1:
         print '{6:},X=,{0:+6.3f},{1:6.3f},Y=,{2:+6.3f},{3:6.3f},Z=,{4:+6.3f},{5:6.3f}'.format(X,eX,Y,eY,Z,eZ,name[i])
@@ -149,84 +147,83 @@ for i in xrange(len(coord)):
         ax1 = fig.add_subplot(131, aspect='equal')
         ax2 = fig.add_subplot(132, aspect='equal')
         ax3 = fig.add_subplot(133, aspect='equal')
-    ax1.set_xlabel('U (km s$^{-1}$)')#,fontproperties=prop)
-    ax1.set_ylabel('V (km s$^{-1}$)')#,fontproperties=prop)
+    ax1.set_xlabel('U (km s$^{-1}$)')
+    ax1.set_ylabel('V (km s$^{-1}$)')
     ax1.set_xlim(-25,20)
     ax1.set_ylim(-30,5)
-    ax1.set_xticklabels(np.asarray(ax1.get_xticks(),dtype=np.int))#,fontproperties=prop)
-    ax1.set_yticklabels(np.asarray(ax1.get_yticks(),dtype=np.int))#,fontproperties=prop)
-    ax2.set_xlabel('U (km s$^{-1}$)')#,fontproperties=prop)
-    ax2.set_ylabel('W (km s$^{-1}$)')#,fontproperties=prop)
+    ax1.set_xticklabels(np.asarray(ax1.get_xticks(),dtype=np.int))
+    ax1.set_yticklabels(np.asarray(ax1.get_yticks(),dtype=np.int))
+    ax2.set_xlabel('U (km s$^{-1}$)')
+    ax2.set_ylabel('W (km s$^{-1}$)')
     ax2.set_xlim(-25,20)
     ax2.set_ylim(-25,10)
-    ax2.set_xticklabels(np.asarray(ax2.get_xticks(),dtype=np.int))#,fontproperties=prop)
-    ax2.set_yticklabels(np.asarray(ax2.get_yticks(),dtype=np.int))#,fontproperties=prop)
-    ax3.set_xlabel('V (km s$^{-1}$)')#,fontproperties=prop)
-    ax3.set_ylabel('W (km s$^{-1}$)')#,fontproperties=prop)
+    ax2.set_xticklabels(np.asarray(ax2.get_xticks(),dtype=np.int))
+    ax2.set_yticklabels(np.asarray(ax2.get_yticks(),dtype=np.int))
+    ax3.set_xlabel('V (km s$^{-1}$)')
+    ax3.set_ylabel('W (km s$^{-1}$)')
     ax3.set_xlim(-35,10)
     ax3.set_ylim(-20,15)
-    ax3.set_xticklabels(np.asarray(ax3.get_xticks(),dtype=np.int))#,fontproperties=prop)
-    ax3.set_yticklabels(np.asarray(ax3.get_yticks(),dtype=np.int))#,fontproperties=prop)
+    ax3.set_xticklabels(np.asarray(ax3.get_xticks(),dtype=np.int))
+    ax3.set_yticklabels(np.asarray(ax3.get_yticks(),dtype=np.int))
     if XYZ:
-        ax4.set_xlabel('X (pc)')#,fontproperties=prop)
-        ax4.set_ylabel('Y (pc)')#,fontproperties=prop)
+        ax4.set_xlabel('X (pc)')
+        ax4.set_ylabel('Y (pc)')
         ax4.set_xlim(-150,100)
         ax4.set_ylim(-150,50)
-        ax4.set_xticklabels(np.asarray(ax4.get_xticks(),dtype=np.int))#,fontproperties=prop)
-        ax4.set_yticklabels(np.asarray(ax4.get_yticks(),dtype=np.int))#,fontproperties=prop)
-        ax5.set_xlabel('X (pc)')#,fontproperties=prop)
-        ax5.set_ylabel('Z (pc)')#,fontproperties=prop)
+        ax4.set_xticklabels(np.asarray(ax4.get_xticks(),dtype=np.int))
+        ax4.set_yticklabels(np.asarray(ax4.get_yticks(),dtype=np.int))
+        ax5.set_xlabel('X (pc)')
+        ax5.set_ylabel('Z (pc)')
         ax5.set_xlim(-150,100)
         ax5.set_ylim(-100,100)
-        ax5.set_xticklabels(np.asarray(ax5.get_xticks(),dtype=np.int))#,fontproperties=prop)
-        ax5.set_yticklabels(np.asarray(ax5.get_yticks(),dtype=np.int))#,fontproperties=prop)
-        ax6.set_xlabel('Y (pc)')#,fontproperties=prop)
-        ax6.set_ylabel('Z (pc)')#,fontproperties=prop)
+        ax5.set_xticklabels(np.asarray(ax5.get_xticks(),dtype=np.int))
+        ax5.set_yticklabels(np.asarray(ax5.get_yticks(),dtype=np.int))
+        ax6.set_xlabel('Y (pc)')
+        ax6.set_ylabel('Z (pc)')
         ax6.set_xlim(-150,100)
         ax6.set_ylim(-100,100)
-        ax6.set_xticklabels(np.asarray(ax6.get_xticks(),dtype=np.int))#,fontproperties=prop)
-        ax6.set_yticklabels(np.asarray(ax6.get_yticks(),dtype=np.int))#,fontproperties=prop)
+        ax6.set_xticklabels(np.asarray(ax6.get_xticks(),dtype=np.int))
+        ax6.set_yticklabels(np.asarray(ax6.get_yticks(),dtype=np.int))
     
     a = 0
-    for i in range(len(moving_groups)):
-        assocellipse1 = Ellipse(xy=(moving_groups[i].U,moving_groups[i].V),width=moving_groups[i].A2*2,height=moving_groups[i].B2*2, angle=moving_groups[i].UV2*180/np.pi,linewidth=0.5)
-        assocellipse2 = Ellipse(xy=(moving_groups[i].U,moving_groups[i].W),width=moving_groups[i].A*2,height=moving_groups[i].C2*2, angle=moving_groups[i].UW2*180/np.pi,linewidth=0.5)
-        assocellipse3 = Ellipse(xy=(moving_groups[i].V,moving_groups[i].W),width=moving_groups[i].B2*2,height=moving_groups[i].C2*2, angle=moving_groups[i].VW2*180/np.pi,linewidth=0.5)
+    for m in range(len(moving_groups)):
+        assocellipse1 = Ellipse(xy=(moving_groups[m].U,moving_groups[m].V),width=moving_groups[m].A2*2,height=moving_groups[m].B2*2, angle=moving_groups[m].UV2*180/np.pi,linewidth=0.5)
+        assocellipse2 = Ellipse(xy=(moving_groups[m].U,moving_groups[m].W),width=moving_groups[m].A2*2,height=moving_groups[m].C2*2, angle=moving_groups[m].UW2*180/np.pi,linewidth=0.5)
+        assocellipse3 = Ellipse(xy=(moving_groups[m].V,moving_groups[m].W),width=moving_groups[m].B2*2,height=moving_groups[m].C2*2, angle=moving_groups[m].VW2*180/np.pi,linewidth=0.5)
         ax1.add_artist(assocellipse1)
         assocellipse1.set_alpha(.6)
         assocellipse1.set_clip_box(ax1.bbox)
-        assocellipse1.set_facecolor(moving_groups[i].color)
+        assocellipse1.set_facecolor(moving_groups[m].color)
         ax2.add_artist(assocellipse2)
         assocellipse2.set_alpha(.6)
         assocellipse2.set_clip_box(ax2.bbox)
-        assocellipse2.set_facecolor(moving_groups[i].color)
+        assocellipse2.set_facecolor(moving_groups[m].color)
         ax3.add_artist(assocellipse3)
         assocellipse3.set_alpha(.6)
         assocellipse3.set_clip_box(ax3.bbox)
-        assocellipse3.set_facecolor(moving_groups[i].color)	
+        assocellipse3.set_facecolor(moving_groups[m].color)	
         if XYZ:
-            assocellipse4 = Ellipse(xy=(moving_groups[i].X,moving_groups[i].Y),width=moving_groups[i].D2*2,height=moving_groups[i].E2*2, angle=moving_groups[i].XY2*180/np.pi,linewidth=0.5)
-            assocellipse5 = Ellipse(xy=(moving_groups[i].X,moving_groups[i].Z),width=moving_groups[i].D2*2,height=moving_groups[i].F2*2, angle=moving_groups[i].XZ2*180/np.pi,linewidth=0.5)
-            assocellipse6 = Ellipse(xy=(moving_groups[i].Y,moving_groups[i].Z),width=moving_groups[i].E2*2,height=moving_groups[i].F2*2, angle=moving_groups[i].YZ2*180/np.pi,linewidth=0.5)
+            assocellipse4 = Ellipse(xy=(moving_groups[m].X,moving_groups[m].Y),width=moving_groups[m].D2*2,height=moving_groups[m].E2*2, angle=moving_groups[m].XY2*180/np.pi,linewidth=0.5)
+            assocellipse5 = Ellipse(xy=(moving_groups[m].X,moving_groups[m].Z),width=moving_groups[m].D2*2,height=moving_groups[m].F2*2, angle=moving_groups[m].XZ2*180/np.pi,linewidth=0.5)
+            assocellipse6 = Ellipse(xy=(moving_groups[m].Y,moving_groups[m].Z),width=moving_groups[m].E2*2,height=moving_groups[m].F2*2, angle=moving_groups[m].YZ2*180/np.pi,linewidth=0.5)
             ax4.add_artist(assocellipse4)
             assocellipse4.set_alpha(.6)
             assocellipse4.set_clip_box(ax4.bbox)
-            assocellipse4.set_facecolor(moving_groups[i].color)
+            assocellipse4.set_facecolor(moving_groups[m].color)
             ax5.add_artist(assocellipse5)
             assocellipse5.set_alpha(.6)
             assocellipse5.set_clip_box(ax5.bbox)
-            assocellipse5.set_facecolor(moving_groups[i].color)
+            assocellipse5.set_facecolor(moving_groups[m].color)
             ax6.add_artist(assocellipse6)
             assocellipse6.set_alpha(.6)
             assocellipse6.set_clip_box(ax6.bbox)
-            assocellipse6.set_facecolor(moving_groups[i].color)	
+            assocellipse6.set_facecolor(moving_groups[m].color)	
             
-        ax2.text(5,8+a*-2.5,moving_groups[i].name,color=moving_groups[i].color)#,fontproperties=prop)
+        ax2.text(5,8+a*-2.0,moving_groups[m].name,color=moving_groups[m].color)
         a=a+1
 
     for n in xrange(rvlen):
         for p in xrange(distlen):
-            #print n,p
             pts1 = Ellipse(xy = (result[n][p][0],result[n][p][2]), width=result[n][p][1]*2,height=result[n][p][3]*2, angle=result[n][p][6]*180/np.pi,linewidth=3)
             pts2 = Ellipse(xy = (result[n][p][0],result[n][p][4]), width=result[n][p][1]*2,height=result[n][p][5]*2, angle=result[n][p][7]*180/np.pi,linewidth=3)
             pts3 = Ellipse(xy = (result[n][p][2],result[n][p][4]), width=result[n][p][3]*2,height=result[n][p][5]*2, angle=result[n][p][8]*180/np.pi,linewidth=3)
@@ -270,10 +267,6 @@ for i in xrange(len(coord)):
         ax5.scatter(result[n][p][9],result[n][p][13],marker='*',s=50,zorder=100,c='#FF0000')
         ax6.scatter(result[n][p][11],result[n][p][13],marker='*',s=50,zorder=100,c='#FF0000')
 
-    # Isometric 3D plot
-    #ax = fig.gca(projection='3d')
-    #for i in result[:,:,0]:
-    #X,Y,Z = triaxial(result[i,0],result[i,2],result[i,4],result[i,1],result[i,3],result[i,5])
     outname = '{0:}.png'.format(name[i])
     pyplot.tight_layout()
     fig.savefig(outname,dpi=300,transparent=False)

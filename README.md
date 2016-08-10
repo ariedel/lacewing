@@ -2,22 +2,22 @@
 Repository for the LACEwING moving group identification code (Riedel et al. in prep)
 
 LocAting Constituent mEmbers In Nearby Groups (LACEwING) is an astrophysics code that uses the kinematics (positions and motions) of stars to determine if they are members of one of the 13 nearby young moving groups and 3 nearby open clusters. It considers membership in:
-epsilon Chameleon
-eta Chameleon (open cluster)
-TW Hydra
-beta Pic
-32 Ori
-Octans
-Tuc-Hor
-Columba
-Carina
-Argus
-AB Doradus
-Carina-Near
-Coma Berenices (open cluster)
-Ursa Major
-chi01 Fornax
-The Hyades (open cluster)
+* epsilon Chameleon
+* eta Chameleon (open cluster)
+* TW Hydra
+* beta Pic
+* 32 Ori
+* Octans
+* Tuc-Hor
+* Columba
+* Carina
+* Argus
+* AB Doradus
+* Carina-Near
+* Coma Berenices (open cluster)
+* Ursa Major
+* chi01 Fornax
+* The Hyades (open cluster)
 
 It is written for Python 2.7 and depends upon Numpy, Scipy, and Astropy modules.
 
@@ -45,12 +45,12 @@ ellipse.py
 astrometry.py
 Moving_Groups_all.csv
 
-lacewing_summary.py <filename> 
-will convert a file from verbose output format to compact format.
+More detailed instructions can be found in Riedel et al. (in prep)
 
 ----------------------------------------------------------------
 
-This git repository also contains Moving_Group_all_prelim.csv, the calibration of LACEwING used in Riedel (2015) conference proceedings, Faherty et al. (2016), Bartlett et al. (2016) and is included for the purposes of reproducibility of results.
+This git repository also contains Moving_Group_all_prelim.csv, the calibration of LACEwING used in Riedel (2015) conference proceedings, Faherty et al. (2016), Bartlett et al. (2016). It is included for the purposes of reproducibility of results. To use it, rename the file to Moving_Group_all.csv
+
 Its differences are:
 * It considers the Pleiades open cluster (not within 100 pc) and the Hercules-Lyra moving group (does not seem to be real)
 * It does not consider the Carina, Carina-Near, 32 Orionis or chi01 Fornax moving groups.
@@ -74,10 +74,37 @@ Inputfile is a .csv file of the same format that LACEwING requires, which should
 
 "Ending Timestep" must be the time in Myr ago you want the calculations to stop. (for instance, -40 for 40 Myr ago). It must be no farther back than the time you ran the moving group itself back to.
 
-"Min Age of Group" and "Max Age of Group" are for the blue box that plots at the age range of the moving group (for instance, for beta Pic, Riedel et al. (2016) used -12 and -25).
+"Min Age of Group" and "Max Age of Group" are for the blue box that plots at the age range of the moving group (for instance, for beta Pic, Riedel et al. (in prep) used -12 and -25).
 
 "Number of Monte Carlo Iterations" governs the accuracy of the traceback. The more traces, the more memory it takes. Unless you have a lot of memory, set this to 10000 or so.
 
 TRACEwING requires one module and a set of .dat files (contained in TRACEwING_groups.tar.bz2) containing the ellipse parameters of the moving groups as a function of time.
 tracewing.py
 kinematics.py
+
+
+-------------------------------------------------------------
+lacewing_summary.py <filename> 
+will convert a file from verbose output format to compact format.
+requires lacewing.py
+
+lacewing_uvwxyz.py <filename> <XYZ> <outfilename>
+reads in a file and outputs three UVW phase-space plots for the stars in that file. If the second argument is XYZ, a second row of plots will contain XYZ plots for the star. It will generate the possible locations using ranges if data (RV and/or plx) does not exist.
+2D ellipse parameters are found in the A2/B2/C2 (etc) columns of Moving_Group_all.csv
+The program will also output a file of UVWXYZ parameters for all stars that have enough information to actually calculate UVWXYZ (or just XYZ).
+Requires lacewing.py, ellipse.py, kinematics.py, and Moving_Group_all.csv
+
+lacewing_mgpmaker.py <filename> <clustername> <iterations>
+reads a list of stars, and generates the UVW and XYZ fitted ellipse parameters for them. The top line of the output file can be added to Moving_Group_all.csv (second line is uncertainties)
+
+lacewing_mgpmaker_2d.py <filename> <clustername> <iterations>
+like lacewing_mgpmaker, except instead of fitting 3D ellipsoids, it fits 2D ellipsoids to slices of data. The top line of the output file can be excerpted into Moving_Group_all.csv in the A2/B2/C2 columns. 
+
+lacewing_montecarlo.py <iterations> <file number>
+will 
+1.) read stellar distributions from Moving_Group_all.csv
+2.) generate <iterations> simulated stars within (and proportionately weighted according to) the distributions.
+3.) run those stars through the lacewing algorithm and output the results, per cluster, into files named <clustername><file number>.
+
+lacewing_percentages.py <filename> will run the actual calibrations on the outputs of lacewing_montecarlo.py. It will output statistics plots and files of coefficients to be pasted into Moving_Group_all.csv
+
