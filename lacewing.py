@@ -102,7 +102,7 @@ def moving_group_loader():
     file.close()
 
     moving_groups = []
-    # AR 2015.0326: Number of moving groups is now controlled by the input file. (Last one should be "field")
+    # AR 2015.0326: Number of moving groups is now controlled by the input file. (Last ones should be "field")
     for i in range(len(groups)):
         moving_groups.append(Mgp(groups[i]))
 
@@ -191,14 +191,11 @@ def spatial(mgp,ra,era,dec,edec,pi,epi,n_init):
 
    return sigma,esigma,dist
 
-def weightadd(sigma):
+def weightadd(sigma,weight):
    sig = 0
    for g in range(len(sigma)):
-      sig = sig + sigma[g]**2
-   sig = np.sqrt(sig)
-
-   if len(sigma) > 1:
-      sig = sig/(len(sigma))
+      sig = sig + weight[g]**2*sigma[g]**2
+   sig = np.sqrt(sig)/np.sum(weight)
 
    return sig
 
@@ -258,6 +255,7 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
         sig = None
 
         sigma = []
+        weight = []
 
         # step 1: compare proper motions. We're going to rotate the star's proper motion 
         #  vectors (pmRA, pmDEC) by the angle of the association's proper motion, to 
@@ -303,30 +301,35 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
                 #  pm_new[0]*exp_dist*4.74
 
             sigma.append(pm_sig)
+            weight.append(1)
 
             pos_ksig,pos_eksig,pos_ksep = spatial(mgp,ra,era,dec,edec,1/exp_dist,exp_edist/(exp_dist**2),iterate)
 
         if (pmexists == 1) & (distexists == 0): # calculate the positional uncertainty for distance, but only use it if the distance does not exist. 
             sigma.append(pos_ksig)
+            weight.append(1)
 
         # step 2: Distances exist. We can do the real test for spatial position.
         if (distexists == 1):
             pos_sig,pos_esig,pos_sep = spatial(mgp,ra,era,dec,edec,plx,eplx,iterate)
             sigma.append(pos_sig)
+            weight.append(1)
 
         # step 3: Distances AND proper motions exist. Now we can compute a kinematic distance error.
         if (pmexists == 1) & (distexists == 1):
             # 3a. use the kinematic distance calculated in step 1c, which should have already run if pmexists==1.
             dist_sig = np.abs(1/plx - exp_dist) / np.sqrt((eplx/plx**2)**2 + exp_edist**2)
             sigma.append(dist_sig)
+            weight.append(1)
+
 
         # step 4: RVs exist. This is straightforward: We have an estimated RV from the convergence.
         if (rvexists == 1):
             rv_sig = np.abs(rv - exp_rv) / np.sqrt(erv**2 + exp_erv**2)
             sigma.append(rv_sig)
+            weight.append(1)
 
-
-        sig = weightadd(sigma)
+        sig = weightadd(sigma,weight)
                         
         #print sig
         if young == "young":

@@ -8,10 +8,11 @@ import ellipse
 #########################################################
 #########################################################
 ### MAIN ROUTINE
-### ARR 2015-10-16
+### ARR 2016-07-29
 ### 1.3: Now compatible with LACEwING v1.3, and uses the 
 ###      lacewing.lacewing() and lacewing_moving_group_loader()
 ###      functions
+### 1.4: Now includes a UVWXYZ test mode
 #########################################################
 #########################################################
 
@@ -124,20 +125,27 @@ for i in xrange(iterations):
         for k in xrange(len(out)):
             # these are the possibilities
             sig_all = [out[k]['pmsig'],out[k]['distsig'],out[k]['rvsig'],out[k]['possig']]
+            weight_all = [1,1,1,1]
             sig_pm = [out[k]['pmsig'],out[k]['posksig']]
+            weight_pm = [1,1]
             sig_dist = [out[k]['possig']]
+            weight_dist = [1]
             sig_rv = [out[k]['rvsig']]
+            weight_rv = [1]
             sig_pmdist = [out[k]['pmsig'],out[k]['distsig'],out[k]['possig']]
+            weight_pmdist = [1,1,1]
             sig_pmrv = [out[k]['pmsig'],out[k]['rvsig'],out[k]['posksig']]
+            weight_pmrv = [1,1,1]
             sig_distrv = [out[k]['rvsig'],out[k]['possig']]
+            weight_distrv = [1,1]
             
-            sigma_all = lacewing.weightadd(sig_all)
-            sigma_pm = lacewing.weightadd(sig_pm)
-            sigma_dist = lacewing.weightadd(sig_dist)
-            sigma_rv = lacewing.weightadd(sig_rv)
-            sigma_pmdist = lacewing.weightadd(sig_pmdist)
-            sigma_pmrv = lacewing.weightadd(sig_pmrv)
-            sigma_distrv = lacewing.weightadd(sig_distrv)
+            sigma_all = lacewing.weightadd(sig_all,weight_all)
+            sigma_pm = lacewing.weightadd(sig_pm,weight_pm)
+            sigma_dist = lacewing.weightadd(sig_dist,weight_dist)
+            sigma_rv = lacewing.weightadd(sig_rv,weight_rv)
+            sigma_pmdist = lacewing.weightadd(sig_pmdist,weight_pmdist)
+            sigma_pmrv = lacewing.weightadd(sig_pmrv,weight_pmrv)
+            sigma_distrv = lacewing.weightadd(sig_distrv,weight_distrv)
         
             outfile[k].write('{0:},{1:8.3f},{2:8.3f},{3:8.3f},{4:8.3f},{5:8.3f},{6:8.3f},{7:8.3f},{8:},\n'.format(out[k]['group'],sigma_all,sigma_pm,sigma_dist,sigma_rv,sigma_pmdist,sigma_pmrv,sigma_distrv,mgp))
 
