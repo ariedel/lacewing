@@ -1,10 +1,8 @@
 import numpy as np
 from matplotlib import pyplot
-from matplotlib import cm
 from matplotlib.patches import Ellipse
 import astropy.io.ascii as ascii
 from sys import argv
-import astrometry
 import kinematics
 import ellipse
 import lacewing

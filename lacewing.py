@@ -573,7 +573,7 @@ if __name__ == "__main__":
             else:
                 outfile.write('{0:},{1:},{2:},{3: 5.0f},{4: 8.2f},{5:7.2f},{6:+6.2f},{7: 5.2f},'.format(name[i],note[i],out[order[0]]['group'],out[order[0]]['probability'],out[order[0]]['kin_dist'],out[order[0]]['kin_edist'],out[order[0]]['kin_rv'],out[order[0]]['kin_erv']))
             for k in range(len(out)):
-                outfile.write('{0: 5.2f},'.format(out[k]['probability']))
+                outfile.write('{0: 5.0f},'.format(out[k]['probability']))
             outfile.write('\n')
 
     outfile.close()
