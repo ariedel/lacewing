@@ -26,7 +26,7 @@ The basic operation is simple:
 1. Prepare a .csv file with a header containing the name, RA, eRA, DEC, eDEC, pi, epi, rv, erv, pmra, epmra, pmdec, epmdec (the order does not matter) and fill in the columns with information about the stars of interest. Empty columns will be either ignored or errors estimated by the code.
 
 2. Run LACEwING:
-python lacewing.py <filename> [<young?> <outputfilename> <verboseoutput?>]
+python lacewing.py (filename) [(young?) (outputfilename) (verboseoutput?)]
 
  * If you do not specify any arguments, you will get a help message.
 
@@ -64,7 +64,7 @@ TRACEwING is an epicyclic traceback program that's designed to determine the dis
 The theory is that all the stars in a moving group formed in the same place at roughly the same time, so running the clock back should put a true member very close to the center of the moving group, at the time the moving group formed.
 
 Operation:
-python tracewing.py <inputfile> <group_to_fit> <method> <ending_timestep> <min_age_of_group> <max_age_of_group> <number_of_monte_carlo_iterations>
+python tracewing.py (inputfile) (group_to_fit) (method) (ending_timestep) (min_age_of_group) (max_age_of_group) (number_of_monte_carlo_iterations)
 
 Inputfile is a .csv file of the same format that LACEwING requires, which should contain kinematic information for all the stars you're interested in.
 
@@ -84,27 +84,28 @@ kinematics.py
 
 
 -------------------------------------------------------------
-lacewing_summary.py <filename> 
+lacewing_summary.py (filename)
 will convert a file from verbose output format to compact format.
 requires lacewing.py
 
-lacewing_uvwxyz.py <filename> <XYZ> <outfilename>
+lacewing_uvwxyz.py (filename) (XYZ?) (outfilename)
 reads in a file and outputs three UVW phase-space plots for the stars in that file. If the second argument is XYZ, a second row of plots will contain XYZ plots for the star. It will generate the possible locations using ranges if data (RV and/or plx) does not exist.
 2D ellipse parameters are found in the A2/B2/C2 (etc) columns of Moving_Group_all.csv
 The program will also output a file of UVWXYZ parameters for all stars that have enough information to actually calculate UVWXYZ (or just XYZ).
 Requires lacewing.py, ellipse.py, kinematics.py, and Moving_Group_all.csv
 
-lacewing_mgpmaker.py <filename> <clustername> <iterations>
+lacewing_mgpmaker.py (filename) (clustername) (iterations)
 reads a list of stars, and generates the UVW and XYZ fitted ellipse parameters for them. The top line of the output file can be added to Moving_Group_all.csv (second line is uncertainties)
 
-lacewing_mgpmaker_2d.py <filename> <clustername> <iterations>
+lacewing_mgpmaker_2d.py (filename) (clustername) (iterations)
 like lacewing_mgpmaker, except instead of fitting 3D ellipsoids, it fits 2D ellipsoids to slices of data. The top line of the output file can be excerpted into Moving_Group_all.csv in the A2/B2/C2 columns. 
 
-lacewing_montecarlo.py <iterations> <file number>
+lacewing_montecarlo.py (iterations) (file number)
 will 
 1.) read stellar distributions from Moving_Group_all.csv
 2.) generate <iterations> simulated stars within (and proportionately weighted according to) the distributions.
-3.) run those stars through the lacewing algorithm and output the results, per cluster, into files named <clustername><file number>.
+3.) run those stars through the lacewing algorithm and output the results, per cluster, into files named (clustername)(file number).
 
-lacewing_percentages.py <filename> will run the actual calibrations on the outputs of lacewing_montecarlo.py. It will output statistics plots and files of coefficients to be pasted into Moving_Group_all.csv
+lacewing_percentages.py (filename) (young?) will run the actual calibrations on a single cluster file output from lacewing_montecarlo.py. It will output statistics plots and files of coefficients in a format ready to be pasted into Moving_Group_all.csv
+If the second argument is "young", the program will ignore all field stars when making and fitting its histograms. Filenames will have .youngonly in them.
 
