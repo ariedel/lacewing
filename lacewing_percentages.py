@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from scipy.special import erfc
 from matplotlib import pyplot as plt
 from sys import argv
@@ -10,64 +10,68 @@ import os
 #########################################################
 #########################################################
 ### MAIN ROUTINE
-### ARR 2015-10-16
+### ARR 2016-07-23
 ### 1.3: Now compatible with LACEwING v1.3, and uses the 
 ###      lacewing.moving_group_loader() function
+### 1.4: Reads the new smaller files
 #########################################################
 #########################################################
 
 def gaus(x,a,sigma):
-    return a*numpy.exp(-(x)**2/(2*sigma**2))
+    return a*np.exp(-(x)**2/(2*sigma**2))
 
 def gauscdf(x,m,sigma):
-    return 0.5*(erfc((x-m)/(sigma*numpy.sqrt(2))))
-
-stop = 24
-step = 0.1
-
-sigrange = numpy.arange(0.0,stop,step)
-acc_all = numpy.zeros_like(sigrange)
-acc_pm = numpy.zeros_like(sigrange)
-acc_dist = numpy.zeros_like(sigrange)
-acc_rv = numpy.zeros_like(sigrange)
-acc_pmdist = numpy.zeros_like(sigrange)
-acc_pmrv = numpy.zeros_like(sigrange)
-acc_distrv = numpy.zeros_like(sigrange)
-total_all = numpy.zeros_like(sigrange)
-total_pm = numpy.zeros_like(sigrange)
-total_dist = numpy.zeros_like(sigrange)
-total_rv = numpy.zeros_like(sigrange)
-total_pmdist = numpy.zeros_like(sigrange)
-total_pmrv = numpy.zeros_like(sigrange)
-total_distrv = numpy.zeros_like(sigrange)
-good_all = numpy.zeros((15,len(sigrange)))
-good_pm = numpy.zeros((15,len(sigrange)))
-good_dist = numpy.zeros((15,len(sigrange)))
-good_rv = numpy.zeros((15,len(sigrange)))
-good_pmdist = numpy.zeros((15,len(sigrange)))
-good_pmrv = numpy.zeros((15,len(sigrange)))
-good_distrv = numpy.zeros((15,len(sigrange)))
+    return 0.5*(erfc((x-m)/(sigma*np.sqrt(2))))
 
 moving_groups = lacewing.moving_group_loader()
 
 groups = []
 for i in xrange(len(moving_groups)):
-    groups.append(moving_groups[i].name.replace(' ','_'))
-groups = numpy.asarray(groups)
+    groups.append(moving_groups[i].name)
+groups = np.asarray(groups)
+
+stop = 24
+step = 0.1
+
+sigrange = np.arange(0.0,stop,step)
+acc_all = np.zeros_like(sigrange)
+acc_pm = np.zeros_like(sigrange)
+acc_dist = np.zeros_like(sigrange)
+acc_rv = np.zeros_like(sigrange)
+acc_pmdist = np.zeros_like(sigrange)
+acc_pmrv = np.zeros_like(sigrange)
+acc_distrv = np.zeros_like(sigrange)
+total_all = np.zeros_like(sigrange)
+total_pm = np.zeros_like(sigrange)
+total_dist = np.zeros_like(sigrange)
+total_rv = np.zeros_like(sigrange)
+total_pmdist = np.zeros_like(sigrange)
+total_pmrv = np.zeros_like(sigrange)
+total_distrv = np.zeros_like(sigrange)
+good_all = np.zeros((len(groups),len(sigrange)))
+good_pm = np.zeros((len(groups),len(sigrange)))
+good_dist = np.zeros((len(groups),len(sigrange)))
+good_rv = np.zeros((len(groups),len(sigrange)))
+good_pmdist = np.zeros((len(groups),len(sigrange)))
+good_pmrv = np.zeros((len(groups),len(sigrange)))
+good_distrv = np.zeros((len(groups),len(sigrange)))
 
 youth=""
-if argv[2] == 'young':
-    youth=".youngonly"
+if len(argv) > 2:
+    if argv[2] == 'young':
+        youth=".youngonly"
 
 if not os.path.exists('montecarlo'):
     os.mkdir('montecarlo')
 
 i = 0
+fieldflip = 0
+ystars = 0
 # The input file contains every star as matched to one of the moving groups.
 # This loop reads in every line in the file, one by one, and builds histograms
 # Each line contains the goodness-of-fit values for the 7 different data cases, relative to one moving group.
 # For each of the 7 data cases, there are arrays: One for total number of points
-#  with that particular binned goodness-of-fit score, and 14 to separate out objects that were "really" 
+#  with that particular binned goodness-of-fit score, and N to separate out objects that were "really" 
 #  members of each of the moving groups, plus one for objects that were "really" field stars.
 with open(argv[1], 'rb') as f:
     for line in f:
@@ -76,44 +80,52 @@ with open(argv[1], 'rb') as f:
         entry = line.split(",")
 
         if argv[2] == 'young':
-            if entry[9] == "Field":
-                continue
-        
-        #print entry[9],numpy.where(entry[9] == groups)
-        grp = numpy.where(entry[9] == groups)[0][0]
-        #print grp
+            if entry[8] == "Field":
+                    continue
 
-        location = float(entry[1])/step
+        #if entry[8] == "Field":
+            #if (fieldflip % 2) == 0:
+            #    fieldflip += 1
+            #else:
+            #    fieldflip += 1
+            #    continue
+            #else:
+                #print i
+        #print entry[8],np.where(entry[8] == groups)
+        grp = np.int(np.where(entry[8] == groups)[0][0])
+        #print groups,entry[8],grp,len(good_all[grp])
+
+        location = np.int(float(entry[1])/step)
         if location < stop/step:
             total_all[location] += 1
             good_all[grp][location] += 1
                     
-        location = float(entry[2])/step
+        location = np.int(float(entry[2])/step)
         if location < stop/step:
             total_pm[location] += 1
             good_pm[grp][location] += 1
 
-        location = float(entry[3])/step
+        location = np.int(float(entry[3])/step)
         if location < stop/step:
             total_dist[location] += 1
             good_dist[grp][location] += 1
 
-        location = float(entry[4])/step
+        location = np.int(float(entry[4])/step)
         if location < stop/step:
             total_rv[location] += 1
             good_rv[grp][location] += 1
 
-        location = float(entry[5])/step
+        location = np.int(float(entry[5])/step)
         if location < stop/step:
             total_pmdist[location] += 1
             good_pmdist[grp][location] += 1
 
-        location = float(entry[6])/step
+        location = np.int(float(entry[6])/step)
         if location < stop/step:
             total_pmrv[location] += 1
             good_pmrv[grp][location] += 1
 
-        location = float(entry[7])/step
+        location = np.int(float(entry[7])/step)
         if location < stop/step:
             total_distrv[location] += 1
             good_distrv[grp][location] += 1
@@ -122,7 +134,7 @@ with open(argv[1], 'rb') as f:
 
 # Now identify the moving group we're interested in...
 print entry[0]
-real = numpy.where(entry[0].replace(' ','_') == groups)[0][0]
+real = np.where(entry[0] == groups)[0][0]
 print real
 
 groupname = entry[0].replace(' ','_')
@@ -148,13 +160,13 @@ others.remove(real)
 print others
 
 # Create arrays of the fraction of real members, as a function of goodness-of-fit
-fraction_all = numpy.asarray(good_all[real]/total_all)
-fraction_pmdist = numpy.asarray(good_pmdist[real]/total_pmdist)
-fraction_pmrv = numpy.asarray(good_pmrv[real]/total_pmrv)
-fraction_distrv = numpy.asarray(good_distrv[real]/total_distrv)
-fraction_pm = numpy.asarray(good_pm[real]/total_pm)
-fraction_dist = numpy.asarray(good_dist[real]/total_dist)
-fraction_rv = numpy.asarray(good_rv[real]/total_rv)
+fraction_all = np.asarray(good_all[real]/total_all)
+fraction_pmdist = np.asarray(good_pmdist[real]/total_pmdist)
+fraction_pmrv = np.asarray(good_pmrv[real]/total_pmrv)
+fraction_distrv = np.asarray(good_distrv[real]/total_distrv)
+fraction_pm = np.asarray(good_pm[real]/total_pm)
+fraction_dist = np.asarray(good_dist[real]/total_dist)
+fraction_rv = np.asarray(good_rv[real]/total_rv)
 
 pltall = ax.plot(sigrange,fraction_all*100,linewidth=4,color='#000000',label="ALL",drawstyle='steps-mid')
 pltpmrv = ax.plot(sigrange,fraction_pmrv*100,linewidth=2,marker='s',color='#FF00FF',label="PM+RV",drawstyle='steps-mid')
@@ -184,13 +196,13 @@ cumulative_distrv = good_distrv[real]
 #    cumulative_pmrv +=  good_pmrv[i]
 #    cumulative_distrv += good_distrv[i]
 #
-#    pltall = axall.plot(sigrange,numpy.asarray(cumulative_all,dtype=numpy.float64)/numpy.asarray(total_all,dtype=numpy.float64))
-#    pltpmrv = axpmrv.plot(sigrange,numpy.asarray(cumulative_pmrv,dtype=numpy.float64)/numpy.asarray(total_pmrv,dtype=numpy.float64))
-#    pltdistrv = axdistrv.plot(sigrange,numpy.asarray(cumulative_distrv,dtype=numpy.float64)/numpy.asarray(total_distrv,dtype=numpy.float64))
-#    pltpmdist = axpmdist.plot(sigrange,numpy.asarray(cumulative_pmdist,dtype=numpy.float64)/numpy.asarray(total_pmdist,dtype=numpy.float64))
-#    pltrv = axrv.plot(sigrange,numpy.asarray(cumulative_rv,dtype=numpy.float64)/numpy.asarray(total_rv,dtype=numpy.float64))
-#    pltpm = axpm.plot(sigrange,numpy.asarray(cumulative_pm,dtype=numpy.float64)/numpy.asarray(total_pm,dtype=numpy.float64))
-#    pltdist = axdist.plot(sigrange,numpy.asarray(cumulative_dist,dtype=numpy.float64)/numpy.asarray(total_dist,dtype=numpy.float64))
+#    pltall = axall.plot(sigrange,np.asarray(cumulative_all,dtype=np.float64)/np.asarray(total_all,dtype=np.float64))
+#    pltpmrv = axpmrv.plot(sigrange,np.asarray(cumulative_pmrv,dtype=np.float64)/np.asarray(total_pmrv,dtype=np.float64))
+#    pltdistrv = axdistrv.plot(sigrange,np.asarray(cumulative_distrv,dtype=np.float64)/np.asarray(total_distrv,dtype=np.float64))
+#    pltpmdist = axpmdist.plot(sigrange,np.asarray(cumulative_pmdist,dtype=np.float64)/np.asarray(total_pmdist,dtype=np.float64))
+#    pltrv = axrv.plot(sigrange,np.asarray(cumulative_rv,dtype=np.float64)/np.asarray(total_rv,dtype=np.float64))
+#    pltpm = axpm.plot(sigrange,np.asarray(cumulative_pm,dtype=np.float64)/np.asarray(total_pm,dtype=np.float64))
+#    pltdist = axdist.plot(sigrange,np.asarray(cumulative_dist,dtype=np.float64)/np.asarray(total_dist,dtype=np.float64))
 #    axall.text(0,cumulative_all[0],groups[i])
 #    axpm.text(0,cumulative_pm[0],groups[i])
 #    axdist.text(0,cumulative_dist[0],groups[i])
@@ -203,6 +215,7 @@ cumulative_distrv = good_distrv[real]
 #    axis.set_ylim((0,1.1))
 #    axis.set_xlim((0,4.0))
 ax.set_xlim(0,3.0)
+ax.set_ylim(0,100)
 
 #adjustprops = dict(left=0.2,bottom=0.2,right=0.8,top=0.8,wspace=0.2,hspace=0.2)
 ax.set_xlabel('Goodness of Fit')
@@ -213,10 +226,8 @@ plt.tight_layout()
 #  Open the file
 outfile = open('montecarlo/{0:}{1:}.percentages'.format(groupname,youth),'wb')
 
-fractionlist = numpy.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
-#fractionlist = numpy.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
-
-#axislist = [axpm,axdist,axrv,axpmdist,axpmrv,axdistrv,axall]
+fractionlist = np.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
+#fractionlist = np.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
 
 mean_param = []
 sig_param = []
@@ -224,13 +235,13 @@ fitcolors = ['r:','g:','b:','y:','m:','c:','k:']
 
 for a in range(len(fractionlist)): 
 #for combination in [fraction_all,fraction_pa,fraction_dist,fraction_rv,fraction_padist,fraction_parv,fraction_distrv]:
-    sift1 = numpy.where(numpy.asarray(numpy.isnan(fractionlist[a])))
+    sift1 = np.where(np.asarray(np.isnan(fractionlist[a])))
     #print sift1
 
     if len(sift1) > 0:
         fractionlist[a][sift1] = 1
 
-    sift9 = numpy.where(sigrange < 0)[0]
+    sift9 = np.where(sigrange > 0.1)[0]
 
     if len(sift9) > 0:
         sigcut = sigrange[sift9] 
@@ -257,29 +268,29 @@ plt.close()
 
 # plot 2: cumulative number of "real" moving group members recovered, as a function of maximum goodness-of-fit value.
 
-cumulative_all = numpy.cumsum(good_all[real])
-cumulative_pmdist = numpy.cumsum(good_pmdist[real])
-cumulative_pmrv = numpy.cumsum(good_pmrv[real])
-cumulative_distrv = numpy.cumsum(good_distrv[real])
-cumulative_pm = numpy.cumsum(good_pm[real])
-cumulative_dist = numpy.cumsum(good_dist[real])
-cumulative_rv = numpy.cumsum(good_rv[real])
+cumulative_all = np.cumsum(good_all[real])
+cumulative_pmdist = np.cumsum(good_pmdist[real])
+cumulative_pmrv = np.cumsum(good_pmrv[real])
+cumulative_distrv = np.cumsum(good_distrv[real])
+cumulative_pm = np.cumsum(good_pm[real])
+cumulative_dist = np.cumsum(good_dist[real])
+cumulative_rv = np.cumsum(good_rv[real])
 
-cumfalse_all = numpy.cumsum(total_all-good_all[real])
-cumfalse_pmdist = numpy.cumsum(total_pmdist-good_pmdist[real])
-cumfalse_pmrv = numpy.cumsum(total_pmrv-good_pmrv[real])
-cumfalse_distrv = numpy.cumsum(total_distrv-good_distrv[real])
-cumfalse_pm = numpy.cumsum(total_pm-good_pm[real])
-cumfalse_dist = numpy.cumsum(total_dist-good_dist[real])
-cumfalse_rv = numpy.cumsum(total_rv-good_rv[real])
+cumfalse_all = np.cumsum(total_all-good_all[real])
+cumfalse_pmdist = np.cumsum(total_pmdist-good_pmdist[real])
+cumfalse_pmrv = np.cumsum(total_pmrv-good_pmrv[real])
+cumfalse_distrv = np.cumsum(total_distrv-good_distrv[real])
+cumfalse_pm = np.cumsum(total_pm-good_pm[real])
+cumfalse_dist = np.cumsum(total_dist-good_dist[real])
+cumfalse_rv = np.cumsum(total_rv-good_rv[real])
 
-cumtotal_all = numpy.cumsum(total_all)
-cumtotal_pmdist = numpy.cumsum(total_pmdist)
-cumtotal_pmrv = numpy.cumsum(total_pmrv)
-cumtotal_distrv = numpy.cumsum(total_distrv)
-cumtotal_pm = numpy.cumsum(total_pm)
-cumtotal_dist = numpy.cumsum(total_dist)
-cumtotal_rv = numpy.cumsum(total_rv)
+cumtotal_all = np.cumsum(total_all)
+cumtotal_pmdist = np.cumsum(total_pmdist)
+cumtotal_pmrv = np.cumsum(total_pmrv)
+cumtotal_distrv = np.cumsum(total_distrv)
+cumtotal_pm = np.cumsum(total_pm)
+cumtotal_dist = np.cumsum(total_dist)
+cumtotal_rv = np.cumsum(total_rv)
 
 for x in range(len(cumfalse_all)):
     print sigrange[x],cumulative_all[x],cumfalse_all[x],cumtotal_all[x]
