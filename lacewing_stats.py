@@ -9,7 +9,7 @@ import lacewing
 def starsort(comparisons,sortquantity,sortkey,i,span):
     if astrometry.isnumber(comparisons[i][sortkey]):
         sig = sortquantity[0]
-        loc = comparisons[i:i+span]['Group'][sortquantity] == comparisons[i]['Note']
+        loc = comparisons[i:i+span]['Group'][sortquantity] == comparisons[i]['Note'].split(";")[0]
         if numpy.sum(loc) == 0:
             loc = -1
         else:
@@ -43,7 +43,7 @@ span = len(moving_groups)
 
 groups = []
 for i in range(len(moving_groups)):
-    groups.append(moving_groups[i].name.replace(" ","_"))
+    groups.append(moving_groups[i].name)
 
 mgp_real = []
 mgp_note = []
@@ -69,7 +69,7 @@ for i in numpy.arange(0,len(comparisons),span):
     sort_rv =  numpy.argsort(numpy.ma.asarray(comparisons[i:i+span]['sig_rv']))
     sort_pos = numpy.argsort(numpy.ma.asarray(comparisons[i:i+span]['sig_pos']))
 
-    mgp_real.append(comparisons[i]['Note'].split(";")[0].replace(' ','_'))
+    mgp_real.append(comparisons[i]['Note'].split(";")[0])
     mgp_note.append(comparisons[i]['Note'].split(";")[1])
 
 
@@ -118,7 +118,7 @@ for i in range(len(groups)):
 
     matched_final = len(numpy.where((mgp_real == groups[i]) & (sig_final == i))[0])
     good_final = len(numpy.where((mgp_real == groups[i]) & (sig_final == i) & ((mgp_note == "Good") | (mgp_note == "(good)")))[0])
-    print numpy.where((mgp_real ==groups[i]))[0],mgp_real,groups[i]
+    print numpy.where((mgp_real ==groups[i]))[0]#,mgp_real,groups[i]
     forplot_final = loc_final[numpy.where((mgp_real == groups[i]))[0]]
     num_final = len(numpy.where((mgp_real == groups[i]) & (sig_final != -1))[0]) 
     num_good_final = len(numpy.where((mgp_real == groups[i]) & ((mgp_note == "Good") | (mgp_note == "(good)")) & (sig_final != -1))[0]) 
@@ -181,7 +181,7 @@ for i in range(len(groups)):
     outfile.write('RV:,{0:3d},{1:3d},/,{2:3d},{3:3d}\n'.format(matched_rv,good_rv,num_rv,num_good_rv))
     outfile.write('POS:,{0:3d},{1:3d},/,{2:3d},{3:3d}\n'.format(matched_pos,good_pos,num_pos,num_good_pos))
 
-    plt.savefig('{0:}/forward_{1:}.png'.format(foldername,groups[i]))
+    plt.savefig('{0:}/forward_{1:}.png'.format(foldername,groups[i].replace(' ','_')))
     plt.clf()
     plt.close()
 
@@ -248,7 +248,7 @@ outfile.close()
 
 for i in range(len(groups)):
     print groups[i]
-    outfile = open('{0:}/output.contamination.{1:}'.format(foldername,groups[i]),'wb')
+    outfile = open('{0:}/output.contamination.{1:}'.format(foldername,groups[i].replace(' ','_')),'wb')
     num_real = len(numpy.where((numpy.asarray(mgp_real) == groups[i]))[0])
     for j in range(len(groups)):
 
