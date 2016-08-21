@@ -10,10 +10,13 @@ import os
 #########################################################
 #########################################################
 ### MAIN ROUTINE
-### ARR 2016-07-23
+### ARR 2016-08-10
 ### 1.3: Now compatible with LACEwING v1.3, and uses the 
 ###      lacewing.moving_group_loader() function
-### 1.4: Reads the new smaller files
+### 1.4: Reads the new smaller files.
+### 1.5: Fieldflip allows us to let in exactly as many 
+###      field stars as young stars, to account for a 
+###      young field option.
 #########################################################
 #########################################################
 
@@ -65,7 +68,7 @@ if not os.path.exists('montecarlo'):
     os.mkdir('montecarlo')
 
 i = 0
-fieldflip = 0
+#fieldflip = 0
 ystars = 0
 # The input file contains every star as matched to one of the moving groups.
 # This loop reads in every line in the file, one by one, and builds histograms
@@ -81,7 +84,12 @@ with open(argv[1], 'rb') as f:
 
         if argv[2] == 'young':
             if entry[8] == "Field":
+                if ystars >= 1: # ystars will increment each time a moving group member is found, and decrement for every field star. Thus, we'll arrive at a 1:1 field:young ratio.
+                    ystars -= 1
+                else:
                     continue
+            else:
+                ystars = ystars +1
 
         #if entry[8] == "Field":
             #if (fieldflip % 2) == 0:
