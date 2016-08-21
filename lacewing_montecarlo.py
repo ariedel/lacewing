@@ -99,18 +99,19 @@ for i in xrange(iterations):
 
     if uvw:
         outfile2.write("{0:},{1:},{2:},{3:},{4:},{5:},{6:},\n".format(tu,tv,tw,tx,ty,tz,mgp))
+
     else:
     
         # now we have a properly generated star; convert it to observables and finish setting up the "observation"
    
         ra,dec,dist,pmra,pmdec,rv = kinematics.gal_rdp(tu,tv,tw,tx,ty,tz)
         plx = 1/dist
-        era = abs(np.random.randn()*0.1/3600.)
-        edec = abs(np.random.randn()*0.1/3600.)
-        eplx = abs(np.random.randn()*0.0005)
-        epmra = abs(np.random.randn()*0.01)
-        epmdec = abs(np.random.randn()*0.01)
-        erv = abs(np.random.randn()*1.0)
+        era = abs(0.05+np.random.randn()*0.05/3600.)
+        edec = abs(0.05+np.random.randn()*0.05/3600.)
+        eplx = abs(0.0005+np.random.randn()*0.0005)
+        epmra = abs(0.005+np.random.randn()*0.005)
+        epmdec = abs(0.005+np.random.randn()*0.005)
+        erv = abs(0.5+np.random.randn()*0.5)
     
         # real observations will not be exactly the right value, with an error. Let's add in observational errors to the values.
 
@@ -119,6 +120,10 @@ for i in xrange(iterations):
         plx = plx + np.random.randn()*eplx
         pmra = pmra + np.random.randn()*epmra
         pmdec = pmdec + np.random.randn()*epmdec
+        rv = rv + np.random.randn()*erv
+
+        #su,sv,sw,sx,sy,sz = kinematics.gal_uvwxyz(ra=ra,dec=dec,plx=plx,pmra=pmra,pmdec=pmdec,vrad=rv) 
+        #outfile2.write("{0:},{1:},{2:},{3:},{4:},{5:},\n".format(su,sv,sw,sx,sy,sz))
 
         # We've got our star set up.  Now run it through the convergence code
         out = lacewing.lacewing(moving_groups,iterate=1000,ra=ra,era=era,dec=dec,edec=edec,pmra=pmra,epmra=epmra,pmdec=pmdec,epmdec=epmdec,plx=plx,eplx=eplx,rv=rv,erv=erv)
