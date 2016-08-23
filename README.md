@@ -54,7 +54,7 @@ This git repository also contains Moving_Group_all_prelim.csv, the calibration o
 Its differences are:
 * It considers the Pleiades open cluster (not within 100 pc) and the Hercules-Lyra moving group (does not seem to be real)
 * It does not consider the Carina, Carina-Near, 32 Orionis or chi01 Fornax moving groups.
-* Moving group parameters were determined from a slightly different set of bona-fide members, and sized according to an estimate of the total number of members rather than an actual calculation. The field population ratio (which only matters in field star mode) is also different.
+* Moving group parameters were determined from a slightly different set of bona-fide members, and sized according to an estimate of the total number of members rather than an actual calculation. The field population ratio was also calculated differently, and not present even at the 1:1 level in young star mode.
 * The field star population was described by a single gaussian in UVW space rather than a multi-element population.
 
 ---------------------------------------------------------------
@@ -107,5 +107,5 @@ will
 3.) run those stars through the lacewing algorithm and output the results, per cluster, into files named (clustername)(file number).
 
 lacewing_percentages.py (filename) (young?) will run the actual calibrations on a single cluster file output from lacewing_montecarlo.py. It will output statistics plots and files of coefficients in a format ready to be pasted into Moving_Group_all.csv
-If the second argument is "young", the program will ignore all field stars when making and fitting its histograms. Filenames will have .youngonly in them.
+If the second argument is "young", the program will ignore nearly all field stars (leaving only a 1:1 equal proportion of moving group and young field objects) when making and fitting its histograms. Filenames will have .youngonly in them.
 
