@@ -217,7 +217,7 @@ for i in xrange(len(coord)):
             assocellipse6.set_clip_box(ax6.bbox)
             assocellipse6.set_facecolor(moving_groups[m].color)	
             
-        ax2.text(5,8+a*-2.0,moving_groups[m].name,color=moving_groups[m].color)
+        ax2.text(5,8+a*-1.7,moving_groups[m].name,color=moving_groups[m].color,fontsize="small")
         a=a+1
 
     for n in xrange(rvlen):
