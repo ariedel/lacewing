@@ -56,7 +56,7 @@ def traceback(argv=None):
     uvwlist = []
     xyzlist = []
     outfile = open("Moving_Group_{0:}.dat".format(mgpname),"wb")
-    outfile.write("U,V,W,A,B,C,UV,UW,VW,X,Y,Z,D,E,G,XY,XZ,YZ\n")
+    outfile.write("U,V,W,A,B,C,UV,UW,VW,X,Y,Z,D,E,F,XY,XZ,YZ\n")
     for j in xrange(n_init):
         tra = ra + (np.random.randn(n_stars)*era)*np.cos(dec*np.pi/180.)
         tdec = dec + np.random.randn(n_stars)*edec
