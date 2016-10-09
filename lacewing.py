@@ -433,17 +433,22 @@ def csv_loader(infilename):
                 tepmra = np.float(star[i]['e_pmRA'])/1000.
                 tpmdec = np.float(star[i]['pmDE'])/1000.
                 tepmdec = np.float(star[i]['e_pmDE'])/1000.
-            except (ValueError,IndexError,KeyError):
                 try:
-                    tpmra = np.float(star[i]['pmRA'])/1000.
-                    tepmra = 0.01
-                    tpmdec = np.float(star[i]['pmDEC'])/1000.
-                    tepmdec = 0.01
+                    tpmra = np.float(star[i]['pmra'])/1000.
+                    tepmra = np.float(star[i]['epmra'])/1000.
+                    tpmdec = np.float(star[i]['pmdec'])/1000.
+                    tepmdec = np.float(star[i]['epmdec'])/1000.
                 except (ValueError,IndexError,KeyError):
-                    tpmra = None
-                    tepmra = None
-                    tpmdec = None
-                    tepmdec = None
+                    try:
+                        tpmra = np.float(star[i]['pmRA'])/1000.
+                        tepmra = 0.01
+                        tpmdec = np.float(star[i]['pmDEC'])/1000.
+                        tepmdec = 0.01
+                    except (ValueError,IndexError,KeyError):
+                        tpmra = None
+                        tepmra = None
+                        tpmdec = None
+                        tepmdec = None
         pmra.append(tpmra)
         epmra.append(tepmra)
         pmdec.append(tpmdec)
