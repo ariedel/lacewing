@@ -2,8 +2,8 @@
 Repository for the LACEwING moving group identification code (Riedel et al. in prep)
 
 LocAting Constituent mEmbers In Nearby Groups (LACEwING) is an astrophysics code that uses the kinematics (positions and motions) of stars to determine if they are members of one of the 13 nearby young moving groups and 3 nearby open clusters. It considers membership in:
-* epsilon Chameleon
-* eta Chameleon (open cluster)
+* epsilon Chameleontis
+* eta Chameleontis (open cluster)
 * TW Hydra
 * beta Pic
 * 32 Ori
@@ -49,7 +49,7 @@ More detailed instructions can be found in Riedel et al. (in prep)
 
 ----------------------------------------------------------------
 
-This git repository also contains Moving_Group_all_prelim.csv, the calibration of LACEwING used in Riedel (2015) conference proceedings, Faherty et al. (2016), Bartlett et al. (2016). It is included for the purposes of reproducibility of results. To use it, rename the file to Moving_Group_all.csv
+This git repository also contains Moving_Group_all_prelim.csv, the calibration of LACEwING used in Riedel (2016) conference proceedings and Faherty et al. (2016). It is included for the purposes of reproducibility of results. To use it, rename the file to Moving_Group_all.csv
 
 Its differences are:
 * It considers the Pleiades open cluster (not within 100 pc) and the Hercules-Lyra moving group (does not seem to be real)
