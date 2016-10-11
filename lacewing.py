@@ -433,6 +433,7 @@ def csv_loader(infilename):
                 tepmra = np.float(star[i]['e_pmRA'])/1000.
                 tpmdec = np.float(star[i]['pmDE'])/1000.
                 tepmdec = np.float(star[i]['e_pmDE'])/1000.
+            except (ValueError,IndexError,KeyError):
                 try:
                     tpmra = np.float(star[i]['pmra'])/1000.
                     tepmra = np.float(star[i]['epmra'])/1000.
