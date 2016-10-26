@@ -10,14 +10,42 @@ import os
 #########################################################
 #########################################################
 ### MAIN ROUTINE
-### ARR 2016-08-10
+### ARR 2016-10-26
 ### 1.3: Now compatible with LACEwING v1.3, and uses the 
 ###      lacewing.moving_group_loader() function
 ### 1.4: Reads the new smaller files.
 ### 1.5: Fieldflip allows us to let in exactly as many 
 ###      field stars as young stars, to account for a 
 ###      young field option.
+### 1.6: Reorganized and commented entire code
 #########################################################
+#########################################################
+
+#########################################################
+## The Program Flow
+#########################################################
+## 1. Load Moving Group names
+## 2a. Set up histograms
+## 2b. Read in cluster file and count up stars
+## 3. Print out results
+## 4. Compute the Gaussian Cumulative Distribution Functions that fit
+##    the data, and print them to a file for copy+pasting into 
+##    Moving_Groups_all.csv
+## 5. First plot (<group>.eps): Percentage of total stars with that 
+##    score that are "really" members, as a function of the 
+##    goodness-of-fit value
+## 6. Second Plot (<group>_cumulative.eps): The cumulative 
+##    percentage of "real" moving group members recovered, as a 
+##    function of maximum goodness-of-fit value accepted.
+## 7. Third plot (<group>_percentages.eps) Number of stars recovered 
+##    as a function of minimum membership percentage accepted. (basically
+##    the same as Plot 2 <group>_cumulative.eps but with percentages)
+## 8. Fourth plot (<group>_falsepositive.eps): The false positive rate
+##    for a sample with a given membership percentage lower limit
+## 9. Fifth Plot (<group>_falserecovery.eps): The false positive 
+##    rate as a function of the recovery rate of stars. Combination of 
+##    Plot 3 and 4, showing the amount of false positives necessary to 
+##    recover a percentage of real members.
 #########################################################
 
 def gaus(x,a,sigma):
@@ -26,12 +54,29 @@ def gaus(x,a,sigma):
 def gauscdf(x,m,sigma):
     return 0.5*(erfc((x-m)/(sigma*np.sqrt(2))))
 
+
+#########################################################
+## 1. Load Moving Group names
+#########################################################
+
 moving_groups = lacewing.moving_group_loader()
 
 groups = []
 for i in xrange(len(moving_groups)):
     groups.append(moving_groups[i].name)
 groups = np.asarray(groups)
+
+youth=""
+if len(argv) > 2:
+    if argv[2] == 'young':
+        youth=".youngonly"
+
+if not os.path.exists('montecarlo'):
+    os.mkdir('montecarlo')
+
+#########################################################
+## 2a. Set up histograms
+#########################################################
 
 stop = 24
 step = 0.1
@@ -59,16 +104,12 @@ good_pmdist = np.zeros((len(groups),len(sigrange)))
 good_pmrv = np.zeros((len(groups),len(sigrange)))
 good_distrv = np.zeros((len(groups),len(sigrange)))
 
-youth=""
-if len(argv) > 2:
-    if argv[2] == 'young':
-        youth=".youngonly"
 
-if not os.path.exists('montecarlo'):
-    os.mkdir('montecarlo')
+#########################################################
+## 2b. Read in cluster file and count up stars
+#########################################################
 
 i = 0
-#fieldflip = 0
 ystars = 0
 # The input file contains every star as matched to one of the moving groups.
 # This loop reads in every line in the file, one by one, and builds histograms
@@ -91,17 +132,7 @@ with open(argv[1], 'rb') as f:
             else:
                 ystars = ystars +1
 
-        #if entry[8] == "Field":
-            #if (fieldflip % 2) == 0:
-            #    fieldflip += 1
-            #else:
-            #    fieldflip += 1
-            #    continue
-            #else:
-                #print i
-        #print entry[8],np.where(entry[8] == groups)
         grp = np.int(np.where(entry[8] == groups)[0][0])
-        #print groups,entry[8],grp,len(good_all[grp])
 
         location = np.int(float(entry[1])/step)
         if location < stop/step:
@@ -140,6 +171,11 @@ with open(argv[1], 'rb') as f:
 
         i+= 1
 
+#########################################################
+## 3. Print out results
+#########################################################
+
+
 # Now identify the moving group we're interested in...
 print entry[0]
 real = np.where(entry[0] == groups)[0][0]
@@ -158,14 +194,11 @@ for m in range(len(sigrange)):
 
 outfile.close()
 
-# First plot: Percentage of total stars with that score that are "really" members, as a function of the goodness-of-fit value
-
-fig1 = plt.figure(figsize=(6,4))
-ax = fig1.add_subplot(111)
-
-others = range(len(groups))
-others.remove(real)
-print others
+#########################################################
+## 4. Compute the Gaussian Cumulative Distribution Functions that fit
+##    the data, and print them to a file for copy+pasting into 
+##    Moving_Groups_all.csv
+#########################################################
 
 # Create arrays of the fraction of real members, as a function of goodness-of-fit
 fraction_all = np.asarray(good_all[real]/total_all)
@@ -176,79 +209,27 @@ fraction_pm = np.asarray(good_pm[real]/total_pm)
 fraction_dist = np.asarray(good_dist[real]/total_dist)
 fraction_rv = np.asarray(good_rv[real]/total_rv)
 
-pltall = ax.plot(sigrange,fraction_all*100,linewidth=4,color='#000000',label="ALL",drawstyle='steps-mid')
-pltpmrv = ax.plot(sigrange,fraction_pmrv*100,linewidth=2,marker='s',color='#FF00FF',label="PM+RV",drawstyle='steps-mid')
-pltdistrv = ax.plot(sigrange,fraction_distrv*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV",drawstyle='steps-mid')
-pltpmdist = ax.plot(sigrange,fraction_pmdist*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST",drawstyle='steps-mid')
-pltrv = ax.plot(sigrange,fraction_rv*100,linewidth=1,marker='o',color='#0000FF',label="RV",drawstyle='steps-mid')
-pltpm = ax.plot(sigrange,fraction_pm*100,linewidth=1,marker='v',color='#FF0000',label="PM",drawstyle='steps-mid')
-pltdist = ax.plot(sigrange,fraction_dist*100,linewidth=1,marker='+',color='#00AA00',label="DIST",drawstyle='steps-mid')
 
-plt.legend(loc='upper right',numpoints=1)
-
-cumulative_all = good_all[real]
-cumulative_pm = good_pm[real]
-cumulative_dist = good_dist[real]
-cumulative_rv = good_rv[real]
-cumulative_pmdist = good_pmdist[real]
-cumulative_pmrv = good_pmrv[real]
-cumulative_distrv = good_distrv[real]
-
-##Uncomment this to plot the members of other groups as well, rather than just the fraction that are members of the "real" group.
-#for i in others:
-#    cumulative_all  +=  good_all[i]
-#    cumulative_pm   +=  good_pm[i]
-#    cumulative_dist +=  good_dist[i]
-#    cumulative_rv   +=  good_rv[i]
-#    cumulative_pmdist += good_pmdist[i]
-#    cumulative_pmrv +=  good_pmrv[i]
-#    cumulative_distrv += good_distrv[i]
-#
-#    pltall = axall.plot(sigrange,np.asarray(cumulative_all,dtype=np.float64)/np.asarray(total_all,dtype=np.float64))
-#    pltpmrv = axpmrv.plot(sigrange,np.asarray(cumulative_pmrv,dtype=np.float64)/np.asarray(total_pmrv,dtype=np.float64))
-#    pltdistrv = axdistrv.plot(sigrange,np.asarray(cumulative_distrv,dtype=np.float64)/np.asarray(total_distrv,dtype=np.float64))
-#    pltpmdist = axpmdist.plot(sigrange,np.asarray(cumulative_pmdist,dtype=np.float64)/np.asarray(total_pmdist,dtype=np.float64))
-#    pltrv = axrv.plot(sigrange,np.asarray(cumulative_rv,dtype=np.float64)/np.asarray(total_rv,dtype=np.float64))
-#    pltpm = axpm.plot(sigrange,np.asarray(cumulative_pm,dtype=np.float64)/np.asarray(total_pm,dtype=np.float64))
-#    pltdist = axdist.plot(sigrange,np.asarray(cumulative_dist,dtype=np.float64)/np.asarray(total_dist,dtype=np.float64))
-#    axall.text(0,cumulative_all[0],groups[i])
-#    axpm.text(0,cumulative_pm[0],groups[i])
-#    axdist.text(0,cumulative_dist[0],groups[i])
-#    axrv.text(0,cumulative_rv[0],groups[i])
-#    axpmdist.text(0,cumulative_pmdist[0],groups[i])
-#    axpmrv.text(0,cumulative_pmrv[0],groups[i])
-#    axdistrv.text(0,cumulative_distrv[0],groups[i])
-
-#for axis in [axall,axpm,axdist,axrv,axpmdist,axpmrv,axdistrv]:
-#    axis.set_ylim((0,1.1))
-#    axis.set_xlim((0,4.0))
-ax.set_xlim(0,3.0)
-ax.set_ylim(0,100)
-
-#adjustprops = dict(left=0.2,bottom=0.2,right=0.8,top=0.8,wspace=0.2,hspace=0.2)
-ax.set_xlabel('Goodness of Fit')
-ax.set_ylabel('Percentage of "real" members')
-plt.tight_layout()
-
-# Create the curve fits to the membership fractions above, and write them to a file
 #  Open the file
 outfile = open('montecarlo/{0:}{1:}.percentages'.format(groupname,youth),'wb')
 
 fractionlist = np.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
-#fractionlist = np.asarray([fraction_pm,fraction_dist,fraction_rv,fraction_pmdist,fraction_pmrv,fraction_distrv,fraction_all])
 
 mean_param = []
 sig_param = []
-fitcolors = ['r:','g:','b:','y:','m:','c:','k:']
 
-for a in range(len(fractionlist)): 
-#for combination in [fraction_all,fraction_pa,fraction_dist,fraction_rv,fraction_padist,fraction_parv,fraction_distrv]:
+# Shift this so the curves fit to the middle of the bins rather than a corner
+sigrange = sigrange+0.05
+
+for a in range(len(fractionlist)):
+    # replace NaN with 1 (educated guess here, for situations with too few objects in the first bins)
     sift1 = np.where(np.asarray(np.isnan(fractionlist[a])))
     #print sift1
 
     if len(sift1) > 0:
         fractionlist[a][sift1] = 1
 
+    # Don't use the first bin at all. This tends to have behavior different from all the others, and small number statistics.
     sift9 = np.where(sigrange > 0.1)[0]
 
     if len(sift9) > 0:
@@ -267,15 +248,54 @@ for a in range(len(fractionlist)):
     mean_param.append(popt[0])
     sig_param.append(popt[1])
 
-    ax.plot(sigrange,gauscdf(sigrange,*popt)*100,fitcolors[a],label='fit')
 
+
+#########################################################
+## 5. First plot (<group>.eps): Percentage of total stars with that 
+##    score that are "really" members, as a function of the 
+##    goodness-of-fit value
+#########################################################
+
+fig1 = plt.figure(figsize=(7,5))
+ax = fig1.add_subplot(111)
+
+others = range(len(groups))
+others.remove(real)
+print others
+
+pltall = ax.plot(sigrange,fraction_all*100,linewidth=4,color='#000000',label="ALL",drawstyle='steps-mid')
+pltpmrv = ax.plot(sigrange,fraction_pmrv*100,linewidth=2,marker='s',color='#FF00FF',label="PM+RV",drawstyle='steps-mid')
+pltdistrv = ax.plot(sigrange,fraction_distrv*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV",drawstyle='steps-mid')
+pltpmdist = ax.plot(sigrange,fraction_pmdist*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST",drawstyle='steps-mid')
+pltrv = ax.plot(sigrange,fraction_rv*100,linewidth=1,marker='o',color='#0000FF',label="RV",drawstyle='steps-mid')
+pltpm = ax.plot(sigrange,fraction_pm*100,linewidth=1,marker='v',color='#FF0000',label="PM",drawstyle='steps-mid')
+pltdist = ax.plot(sigrange,fraction_dist*100,linewidth=1,marker='+',color='#00AA00',label="DIST",drawstyle='steps-mid')
+
+# Plot the Gaussian CDF fits to the histograms
+fitcolors = ['r:','g:','b:','y:','m:','c:','k:']
+for a in range(len(fractionlist)):
+    ax.plot(sigrange,gauscdf(sigrange,mean_param[a],sig_param[a])*100,fitcolors[a])
+
+plt.legend(loc='upper right',numpoints=1)
+
+ax.set_xlim(0,3.0)
+ax.set_ylim(0,100)
+
+ax.set_xlabel('Goodness of Fit')
+ax.set_ylabel('Percentage of "Real" Members')
+plt.tight_layout()
 
 plt.savefig('montecarlo/{0:}{1:}.eps'.format(groupname,youth))
 plt.clf()
 plt.close()
 
-# plot 2: cumulative number of "real" moving group members recovered, as a function of maximum goodness-of-fit value.
+#########################################################
+## 6. Second Plot (<group>_cumulative.eps): The cumulative 
+##    percentage of "real" moving group members recovered, as a 
+##    function of maximum goodness-of-fit value accepted.
+#########################################################
 
+# generate cumulative values of members, nonmembers, and total. 
 cumulative_all = np.cumsum(good_all[real])
 cumulative_pmdist = np.cumsum(good_pmdist[real])
 cumulative_pmrv = np.cumsum(good_pmrv[real])
@@ -283,6 +303,73 @@ cumulative_distrv = np.cumsum(good_distrv[real])
 cumulative_pm = np.cumsum(good_pm[real])
 cumulative_dist = np.cumsum(good_dist[real])
 cumulative_rv = np.cumsum(good_rv[real])
+
+#for x in range(len(cumfalse_all)):
+#    print sigrange[x],cumulative_all[x],cumfalse_all[x],cumtotal_all[x]
+
+fig2 = plt.figure(figsize=(7,5))
+ax2 = fig2.add_subplot(111)
+pltall = ax2.plot(sigrange,cumulative_all/cumulative_all[-1]*100,linewidth=4,color = '#000000',label="ALL")
+pltpmrv = ax2.plot(sigrange,cumulative_pmrv/cumulative_pmrv[-1]*100,linewidth=2,marker='s', color='#FF00FF',label="PM+RV")
+pltdistrv = ax2.plot(sigrange,cumulative_distrv/cumulative_distrv[-1]*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV")
+pltpmdist = ax2.plot(sigrange,cumulative_pmdist/cumulative_pmdist[-1]*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST")
+pltrv = ax2.plot(sigrange,cumulative_rv/cumulative_rv[-1]*100,linewidth=1,marker='o',color='#0000FF',label="RV")
+pltpm = ax2.plot(sigrange,cumulative_pm/cumulative_pm[-1]*100,linewidth=1,marker='v',color='#FF0000',label="PM")
+pltdist = ax2.plot(sigrange,cumulative_dist/cumulative_dist[-1]*100,linewidth=1,marker='+',color='#00AA00',label="DIST")
+
+ax2.set_ylim((0,100.0))
+ax2.set_xlim((0,3.0))
+ax2.set_xlabel('Maximum Goodness of Fit Parameter')
+ax2.set_ylabel('Percentage of "Real" Members Recovered')
+plt.legend(loc='lower right',numpoints=1)
+
+plt.tight_layout()
+plt.savefig('montecarlo/{0:}_cumulative.eps'.format(groupname,youth))
+plt.clf()
+outfile.close()
+
+#########################################################
+## 7. Third plot (<group>_percentages.eps) Number of stars recovered 
+##    as a function of minimum membership percentage accepted. (basically
+##    the same as Plot 2 <group>_cumulative.eps but with percentages)
+#########################################################
+
+# Generate the percentage values that map to the goodness-of-fit values
+percent_pm = 100*gauscdf(sigrange,mean_param[0],sig_param[0])
+percent_dist = 100*gauscdf(sigrange,mean_param[1],sig_param[1])
+percent_rv = 100*gauscdf(sigrange,mean_param[2],sig_param[2])
+percent_pmdist = 100*gauscdf(sigrange,mean_param[3],sig_param[3])
+percent_pmrv = 100*gauscdf(sigrange,mean_param[4],sig_param[4])
+percent_distrv = 100*gauscdf(sigrange,mean_param[5],sig_param[5])
+percent_all = 100*gauscdf(sigrange,mean_param[6],sig_param[6])
+
+
+fig3 = plt.figure(figsize=(7,5))
+ax3 = fig3.add_subplot(111)
+pltall = ax3.plot(percent_all,cumulative_all/cumulative_all[-1]*100.,linewidth=4,color = '#000000',label="ALL")
+pltpmrv = ax3.plot(percent_pmrv,cumulative_pmrv/cumulative_pmrv[-1]*100,linewidth=2,marker='s', color='#FF00FF',label="PM+RV")
+pltdistrv = ax3.plot(percent_distrv,cumulative_distrv/cumulative_distrv[-1]*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV")
+pltpmdist = ax3.plot(percent_pmdist,cumulative_pmdist/cumulative_pmdist[-1]*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST")
+pltrv = ax3.plot(percent_rv,cumulative_rv/cumulative_rv[-1]*100,linewidth=1,marker='o',color='#0000FF',label="RV")
+pltpm = ax3.plot(percent_pm,cumulative_pm/cumulative_pm[-1]*100,linewidth=1,marker='v',color='#FF0000',label="PM")
+pltdist = ax3.plot(percent_dist,cumulative_dist/cumulative_dist[-1]*100,linewidth=1,marker='+',color='#00AA00',label="DIST")
+
+ax3.set_ylim((0,100))
+ax3.set_xlim((0,100))
+ax3.set_xlabel('Minimum Membership Percentage Accepted')
+ax3.set_ylabel('Percentage of "Real" Members Recovered')
+
+plt.legend(loc='upper right',numpoints=1)
+
+#plt.title('{0:}'.format(entry[0]))
+plt.tight_layout()
+plt.savefig('montecarlo/{0:}{1:}_percentages.eps'.format(groupname,youth))
+plt.close()
+
+#########################################################
+## 8. Fourth plot (<group>_falsepositive.eps): The false positive rate
+##    for a sample with a given membership percentage lower limit
+#########################################################
 
 cumfalse_all = np.cumsum(total_all-good_all[real])
 cumfalse_pmdist = np.cumsum(total_pmdist-good_pmdist[real])
@@ -300,66 +387,8 @@ cumtotal_pm = np.cumsum(total_pm)
 cumtotal_dist = np.cumsum(total_dist)
 cumtotal_rv = np.cumsum(total_rv)
 
-for x in range(len(cumfalse_all)):
-    print sigrange[x],cumulative_all[x],cumfalse_all[x],cumtotal_all[x]
 
-fig2 = plt.figure(figsize=(6,4))
-ax2 = fig2.add_subplot(111)
-pltall = ax2.plot(sigrange,cumulative_all/cumulative_all[-1]*100,linewidth=4,color = '#000000',label="ALL")
-pltpmrv = ax2.plot(sigrange,cumulative_pmrv/cumulative_pmrv[-1]*100,linewidth=2,marker='s', color='#FF00FF',label="PM+RV")
-pltdistrv = ax2.plot(sigrange,cumulative_distrv/cumulative_distrv[-1]*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV")
-pltpmdist = ax2.plot(sigrange,cumulative_pmdist/cumulative_pmdist[-1]*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST")
-pltrv = ax2.plot(sigrange,cumulative_rv/cumulative_rv[-1]*100,linewidth=1,marker='o',color='#0000FF',label="RV")
-pltpm = ax2.plot(sigrange,cumulative_pm/cumulative_pm[-1]*100,linewidth=1,marker='v',color='#FF0000',label="PM")
-pltdist = ax2.plot(sigrange,cumulative_dist/cumulative_dist[-1]*100,linewidth=1,marker='+',color='#00AA00',label="DIST")
-
-ax2.set_ylim((0,100.0))
-ax2.set_xlim((0,3.0))
-ax2.set_xlabel('Maximum Goodness of Fit Parameter')
-ax2.set_ylabel('Fraction of actual members recovered')
-
-plt.legend(loc='lower right',numpoints=1)
-
-#plt.title('{0:}'.format(entry[0]))
-
-plt.savefig('montecarlo/{0:}_cumulative.eps'.format(groupname,youth))
-plt.clf()
-outfile.close()
-
-# Plot 3: Number of stars recovered as a function of minimum percentage accepted
-
-percent_pm = 100*gauscdf(sigrange,mean_param[0],sig_param[0])
-percent_dist = 100*gauscdf(sigrange,mean_param[1],sig_param[1])
-percent_rv = 100*gauscdf(sigrange,mean_param[2],sig_param[2])
-percent_pmdist = 100*gauscdf(sigrange,mean_param[3],sig_param[3])
-percent_pmrv = 100*gauscdf(sigrange,mean_param[4],sig_param[4])
-percent_distrv = 100*gauscdf(sigrange,mean_param[5],sig_param[5])
-percent_all = 100*gauscdf(sigrange,mean_param[6],sig_param[6])
-
-
-fig3 = plt.figure(figsize=(6,4))
-ax3 = fig3.add_subplot(111)
-pltall = ax3.plot(percent_all,cumulative_all/cumulative_all[-1]*100.,linewidth=4,color = '#000000',label="ALL")
-pltpmrv = ax3.plot(percent_pmrv,cumulative_pmrv/cumulative_pmrv[-1]*100,linewidth=2,marker='s', color='#FF00FF',label="PM+RV")
-pltdistrv = ax3.plot(percent_distrv,cumulative_distrv/cumulative_distrv[-1]*100,linewidth=2,marker='*',color='#00AAFF',label="DIST+RV")
-pltpmdist = ax3.plot(percent_pmdist,cumulative_pmdist/cumulative_pmdist[-1]*100,linewidth=2,marker='h',color='#FFAA00',label="PM+DIST")
-pltrv = ax3.plot(percent_rv,cumulative_rv/cumulative_rv[-1]*100,linewidth=1,marker='o',color='#0000FF',label="RV")
-pltpm = ax3.plot(percent_pm,cumulative_pm/cumulative_pm[-1]*100,linewidth=1,marker='v',color='#FF0000',label="PM")
-pltdist = ax3.plot(percent_dist,cumulative_dist/cumulative_dist[-1]*100,linewidth=1,marker='+',color='#00AA00',label="DIST")
-
-ax3.set_ylim((0,100))
-ax3.set_xlim((0,100))
-ax3.set_xlabel('Minimum Percentage Accepted')
-ax3.set_ylabel('Percent of Members Recovered')
-
-plt.legend(loc='upper right',numpoints=1)
-
-#plt.title('{0:}'.format(entry[0]))
-
-plt.savefig('montecarlo/{0:}{1:}_percentages.eps'.format(groupname,youth))
-plt.close()
-
-fig4 = plt.figure(figsize=(6,4))
+fig4 = plt.figure(figsize=(7,5))
 ax4 = fig4.add_subplot(111)
 pltall = ax4.plot(percent_all,cumfalse_all/cumtotal_all*100.,linewidth=4,color = '#000000',label="ALL")
 pltpmrv = ax4.plot(percent_pmrv,cumfalse_pmrv/cumtotal_pmrv*100,linewidth=2,marker='s', color='#FF00FF',label="PM+RV")
@@ -371,14 +400,21 @@ pltdist = ax4.plot(percent_dist,cumfalse_dist/cumtotal_dist*100,linewidth=1,mark
 
 ax4.set_ylim((0,100))
 ax4.set_xlim((0,100))
-ax4.set_xlabel('Minimum Percentage Accepted')
-ax4.set_ylabel('False positive contamination')
+ax4.set_xlabel('Minimum Membership Percentage Accepted')
+ax4.set_ylabel('False positive contamination (%)')
 
 plt.legend(loc='upper right',numpoints=1)
-
+plt.tight_layout()
 #plt.title('{0:}'.format(entry[0]))
 plt.savefig('montecarlo/{0:}{1:}_falsepositive.eps'.format(groupname,youth))
 plt.close()
+
+#########################################################
+## 9. Fifth Plot (<group>_falserecovery.eps): The false positive 
+##    rate as a function of the recovery rate of stars. Combination of 
+##    Plot 3 and 4, showing the amount of false positives necessary to 
+##    recover a percentage of real members.
+#########################################################
 
 fig5 = plt.figure(figsize=(7,5))
 ax5 = fig5.add_subplot(111)
@@ -392,11 +428,11 @@ pltdist = ax5.plot(cumulative_dist/cumulative_dist[-1]*100,cumfalse_dist/cumtota
 
 ax5.set_ylim((0,100))
 ax5.set_xlim((0,100))
-ax5.set_xlabel('Percent of Members Recovered')
-ax5.set_ylabel('False positive contamination')
+ax5.set_xlabel('Percent of "Real" Members Recovered')
+ax5.set_ylabel('False positive contamination (%)')
 
 plt.legend(loc='lower right')
-
+plt.tight_layout()
 #plt.title('{0:}'.format(entry[0]))
 plt.savefig('montecarlo/{0:}{1:}_falserecovery.eps'.format(groupname,youth))
 plt.close()
