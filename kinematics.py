@@ -213,8 +213,8 @@ def gal_tester():
       print 
 
 def ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   n_time = np.int(np.ceil(timespan/timestep))
-   times = np.arange(0, timespan,timestep)
+   n_time = np.asarray(timespan/timestep,dtype='int')
+   times = np.arange(0,timespan,timestep,dtype='int')
 
    px = np.zeros((n_int,n_time))
    py = np.zeros((n_int,n_time))
@@ -238,8 +238,9 @@ def ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan
    return px,py,pz
 
 def epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   n_time = np.int(np.ceil(timespan/timestep))
-   times = np.arange(0,timespan,timestep)
+   n_time = np.asarray(timespan/timestep,dtype='int')
+   times = np.arange(0,timespan,timestep,dtype='int')
+
    px = np.zeros((n_int,n_time))
    py = np.zeros((n_int,n_time))
    pz = np.zeros((n_int,n_time))
@@ -294,8 +295,8 @@ def random():
     return (np.random.rand()*2)-1
 
 def ballistic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   n_time = np.ceil(timespan/timestep)
-   times = np.arange(0, timespan,timestep)
+   n_time = np.asarray(timespan/timestep,dtype='int')
+   times = np.arange(0,timespan,timestep,dtype='int')
 
    px = np.zeros((n_int,n_time))
    py = np.zeros((n_int,n_time))
@@ -319,8 +320,8 @@ def ballistic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
    return px,py,pz
 
 def epicyclic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
-   n_time = timespan/timestep
-   times = np.arange(0,timespan,timestep)
+   n_time = np.asarray(timespan/timestep,dtype='int')
+   times = np.arange(0,timespan,timestep,dtype='int')
    px = np.zeros((n_int,n_time))
    py = np.zeros((n_int,n_time))
    pz = np.zeros((n_int,n_time))
