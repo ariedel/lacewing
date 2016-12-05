@@ -395,6 +395,15 @@ def csv_loader(infilename):
     rv = []
     erv = []
     note = []
+
+    # print out a list of which columns LACEwING has recognized. Useful to make sure the input file has been read in correctly.
+    known = ['Name','RA','DEC','RAdeg','DEdeg','eRA', 'eDEC', 'e_RAdeg', 'e_DEdeg', 'RAh','RAm','RAs','DE-','DEd','DEm','DEs','eRA','eDEC','pmRA','epmRA','pmDEC','epmDEC','e_pmRA','pmDE','e_pmDE','pmra','epmra','pmdec','epmdec','pi','epi','plx','e_plx','rv','erv','HRV','e_HRV','Note']
+    # compare list of recognizeable names to star.keys()
+    recognized = [k for k in known if k in star.keys()]
+    print "Recognized Columns: ",
+    for key in recognized:
+        print key,
+    print
     
     for i in np.arange(0,len(star)):
        
@@ -419,6 +428,7 @@ def csv_loader(infilename):
             except (ValueError,IndexError,KeyError):
                 tera = 1.0/3600.
                 tedec = 1.0/3600.
+
         era.append(tera)
         edec.append(tedec)
     
@@ -440,6 +450,7 @@ def csv_loader(infilename):
                     tpmdec = np.float(star[i]['pmdec'])/1000.
                     tepmdec = np.float(star[i]['epmdec'])/1000.
                 except (ValueError,IndexError,KeyError):
+
                     try:
                         tpmra = np.float(star[i]['pmRA'])/1000.
                         tepmra = 0.01
@@ -450,6 +461,7 @@ def csv_loader(infilename):
                         tepmra = None
                         tpmdec = None
                         tepmdec = None
+
         pmra.append(tpmra)
         epmra.append(tepmra)
         pmdec.append(tpmdec)
@@ -465,6 +477,7 @@ def csv_loader(infilename):
             except (ValueError, IndexError,KeyError):
                 tplx = None
                 teplx = None
+
         plx.append(tplx)
         eplx.append(teplx)
 
@@ -478,6 +491,7 @@ def csv_loader(infilename):
             except (ValueError, IndexError,KeyError):
                 trv = None
                 terv = None
+
         rv.append(trv)
         erv.append(terv)
 
@@ -485,6 +499,7 @@ def csv_loader(infilename):
             tnote = star[i]['Note']
         except(ValueError, IndexError,KeyError):
             tnote = None
+
         note.append(tnote)
 
     return name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note
