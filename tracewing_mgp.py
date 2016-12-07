@@ -1,5 +1,5 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot
 #from matplotlib import cm
 from matplotlib.patches import Ellipse
@@ -9,6 +9,7 @@ from matplotlib import _png
 import kinematics
 import ellipse
 import astrometry
+import lacewing
 import sys
 from astropy.io import ascii
 
@@ -33,21 +34,15 @@ def traceback(argv=None):
 
     timespan = np.float(argv[6])
     timestep = -0.1
-    n_int = 1000
+    n_int = int(1000)
     full_timespan = -800
    
-    readtable = ascii.get_reader(Reader=ascii.Basic)
-    readtable.header.splitter.delimiter = ','
-    readtable.data.splitter.delimiter = ','
-    readtable.header.start_line = 0
-    readtable.data.start_line = 0
-
-    young = readtable.read(argv[1])
+    name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = lacewing.csv_loader(argv[1])
    
     # How many stars are we fitting? 
-    n_stars = len(np.where(np.bitwise_and(astrometry.isnumber(young['HRV']),astrometry.isnumber(young['plx'])))[0])
-
-    print n_stars
+    good_stars = [x for x in xrange(len(coord)) if ((pmra[x] is not None) & (pmdec[x] is not None) & (plx[x] is not None) & (rv[x] is not None))]
+    n_stars = len(good_stars)
+    print 'Number of stars in solution: {0:}'.format(n_stars)
 
     # it saves time and memory to make arrays in advance, even in python
     # Set dtype=np.float32 to save memory
@@ -59,115 +54,36 @@ def traceback(argv=None):
     #mgp_color = []
     mgp_n = []
 
-    print mgp_x.shape
-
-    #print young
-
     n = 0
-    for i in xrange(len(young)):
-        if isinstance(young[i]['RAdeg'], np.ma.core.MaskedConstant):
-            continue
-        else:
-            try:
-                #if isinstance(young[i]['SpType'], np.ma.core.MaskedConstant):
-                #    if isinstance(young[i]['V-K'], np.ma.core.MaskedConstant):
-                #        size=20
-                #        color='#000000'
-                #    else:
-                #        if young[i]['V-K'] <= -0.3:  #O
-                #            size = 60
-                #            color= "#3F00FF"
-                #        elif young[i]['V-K'] <= 0 and young[i]['V-K'] > -0.3: #B
-                #            size = 50
-                #            color= "#3F3FFF"
-                #        elif young[i]['V-K'] <= 0.5 and young[i]['V-K'] > 0: #A
-                #            size = 40
-                #            color= "#7F7FFF"
-                #        elif young[i]['V-K'] <= 1.0 and young[i]['V-K'] > 0.5: #F
-                #            size = 30
-                #            color= "#CFCFFF"
-                #        elif young[i]['V-K'] <= 2.0 and young[i]['V-K'] > 1.0: #G
-                #            size = 20
-                #            color= "#CFCFCF"
-                #        elif young[i]['V-K'] <= 3.8 and young[i]['V-K'] > 2.0: #K
-                #            size = 15
-                #            color= "#FFDF1F"
-                #        elif young[i]['V-K'] <= 9.5 and young[i]['V-K'] > 3.8: #M
-                #            size = 10
-                #            color= "#FF3F00"
-                #        elif young[i]['V-K'] > 9.5: #L
-                #            size = 5
-                #            color = "#FF0000"
-                #                    
-                #else:
-                #    if len(young[i]['SpType']) == 0:
-                #        size = 20
-                #        color= "#000000"
-                #    elif young[i]['SpType'][0] == 'O':
-                #        size = 60
-                #        color= "#3F00FF"
-                #    elif young[i]['SpType'][0] == 'B':
-                #        size = 50
-                #        color= "#3F3FFF"
-                #    elif young[i]['SpType'][0] == 'A':
-                #        size = 40
-                #        color= "#7F7FFF"
-                #    elif young[i]['SpType'][0] == 'F':
-                #        size = 30
-                #        color= "#CFCFFF"
-                #    elif young[i]['SpType'][0] == 'G':
-                #        size = 20
-                #        color= "#CFCFCF"
-                #    elif young[i]['SpType'][0] == 'K':
-                #        size = 15
-                #        color= "#FFDF1F"
-                #    elif young[i]['SpType'][0] == 'M':
-                #        size = 10
-                #        color= "#FF3F00"
-                #    elif young[i]['SpType'][0] == 'L':
-                #        size = 5
-                #        color = "#FF0000"
-                ra =   float(young[i]['RAdeg'])
-                era =  float(young[i]['e_RAdeg'])/3600000
-                dec =  float(young[i]['DEdeg'])
-                edec = float(young[i]['e_DEdeg'])/3600000
-                dist = 1000/float(young[i]['plx'])
-                edist = float(young[i]['e_plx'])/float(young[i]['plx'])*dist
-                pmra = float(young[i]['pmRA'])/1000.
-                epmra = float(young[i]['e_pmRA'])/1000.
-                pmdec = float(young[i]['pmDE'])/1000.
-                epmdec = float(young[i]['e_pmDE'])/1000.
-                rv =   float(young[i]['HRV'])
-                erv =  float(young[i]['e_HRV'])
-                print n, young[i]['Name'],ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv
-            except ValueError:
-                continue
-                ###############################################################
-                ### We now have the particulars about one star.  We are now ###
-                ###  going to run I monte carlo iterations through the      ###
-                ###  specified traceback method. The traceback is going to  ###
-                ###  compute UVW points and run them back in time. We could ###
-                ###  then fit an ellipse to this star and save only the     ###
-                ###  ellipse parameters, but then information would be lost ###
-                ###  (or need to be re-created) when we want to determine   ###
-                ###  the shape of the moving group itself. Instead, we'll   ###
-                ###  save and use every single monte carlo iteration.       ###
-                ###############################################################
+    print "  #  Name             RA        DEC     Dist.   pmRA    pmDEC    RV"
+    for i in good_stars:
+        print '({0:2d}) {1:16} {2:08.4f} {3:+07.4f} {4:6.2f} {5:+.4f} {6:+.4f} {7:+6.2f}'.format(i,name[i],coord[i].ra.degree,coord[i].dec.degree,1/plx[i],pmra[i],pmdec[i],rv[i])
+        ###############################################################
+        ### We now have the particulars about one star.  We are now ###
+        ###  going to run I monte carlo iterations through the      ###
+        ###  specified traceback method. The traceback is going to  ###
+        ###  compute UVW points and run them back in time. We could ###
+        ###  then fit an ellipse to this star and save only the     ###
+        ###  ellipse parameters, but then information would be lost ###
+        ###  (or need to be re-created) when we want to determine   ###
+        ###  the shape of the moving group itself. Instead, we'll   ###
+        ###  save and use every single monte carlo iteration.       ###
+        ###############################################################
                     
-            if method == 'ballistic':
-                px,py,pz = kinematics.ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
-            elif method == 'epicyclic':
-                px,py,pz = kinematics.epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
-            elif method == 'potential':
-                px,py,pz = kinematics.potential(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,full_timespan,timestep,n_int)
-            # store these iterations
-            mgp_x[n] = px
-            mgp_y[n] = py
-            mgp_z[n] = pz
-            mgp_n.append(young[i]['Name'])
+        if method == 'ballistic':
+            px,py,pz = kinematics.ballistic(coord[i].ra.degree,era[i],coord[i].dec.degree,edec[i],1/plx[i],eplx[i]/(plx[i]**2),pmra[i],epmra[i],pmdec[i],epmdec[i],rv[i],erv[i],full_timespan,timestep,n_int)
+        elif method == 'epicyclic':
+            px,py,pz = kinematics.epicyclic(coord[i].ra.degree,era[i],coord[i].dec.degree,edec[i],1/plx[i],eplx[i]/(plx[i]**2),pmra[i],epmra[i],pmdec[i],epmdec[i],rv[i],erv[i],full_timespan,timestep,n_int)
+        elif method == 'potential':
+            px,py,pz = kinematics.potential(coord[i].ra.degree,era[i],coord[i].dec.degree,edec[i],1/plx[i],eplx[i]/(plx[i]**2),pmra[i],epmra[i],pmdec[i],epmdec[i],rv[i],erv[i],full_timespan,timestep,n_int)
+        # store these iterations
+        mgp_x[n] = px
+        mgp_y[n] = py
+        mgp_z[n] = pz
+        mgp_n.append(name[i])
             
-            #mgp_color.extend([color]*n_int)
-            n = n+1
+        #mgp_color.extend([color]*n_int)
+        n = n+1
     # remove spaces from name - helps with programming later on
     mgpname = mgpname.replace(' ', '_')
 
@@ -289,6 +205,7 @@ def traceback(argv=None):
     y = np.asarray(y)
     z = np.asarray(z)
     print a
+    # Control the crowding/density of the plots. Only plot 30,000 curves regardless of how many there really are.
     if n_stars*n_int > 30000:
         p = np.asarray(np.ceil(np.random.rand(30000)*(n_stars*n_int-1)),np.int)
     else:
@@ -320,44 +237,8 @@ def traceback(argv=None):
     fig2.clf()
     pyplot.close()
 
-#    #####################################################
-#    ### The 3D plot. We're going to plot all of the   ###
-#    ###  iterations of the moving group so we can see ###
-#    ###  the full effect. Also, it looks like an      ###
-#    ###  explosion, and that's always cool.           ###
-#    #####################################################
-#    
-#    print mgp_x[0]   
-#    for k in xrange(len(times)):
-#        print times[k]
-#        fig = pyplot.figure(figsize=(9.6,5.5))
-#        ax = fig.add_subplot(111,projection='3d', aspect='equal')
-#
-#        mgp_tx,mgp_ty,mgp_tz = ellipse.triaxial(mgpmaster[k])
-#
-#        #Add the Sun
-#        #ax.scatter(0-mgpmaster[k]['x'],0-mgpmaster[k]['y'],0-mgpmaster[k]['z'],s=50,color="#FFCF00")
-#
-#        ax.scatter(mgp_x[k]-mgpmaster[k]['x'],mgp_y[k]-mgpmaster[k]['y'],mgp_z[k]-mgpmaster[k]['z'],c=mgp_color,s=1,linewidth=0.02,alpha=0.5)
-#        ax.plot_surface(mgp_tx-mgpmaster[k]['x'],mgp_ty-mgpmaster[k]['y'],mgp_tz-mgpmaster[k]['z'],rstride=4,cstride=4,color="#000000",alpha=0.1,linewidth=0.02)
-#
-#        ax.set_xlim(-200,200)
-#        ax.set_ylim(-200,200)
-#        ax.set_zlim(-200,200)
-#        ax.plot([-200,200],[0,0],[0,0],"k")
-#        ax.plot([0,0],[-200,200],[0,0],"k")
-#        ax.plot([0,0],[0,0],[-200,200],"k")
-#        ax.set_xlabel('$\Delta$X (pc)')
-#        ax.set_ylabel('$\Delta$Y (pc)')
-#        ax.set_zlabel('$\Delta$Z (pc)')
-#        ax.set_title("{0: 4.1f}".format(times[k][0])+" Myr")
-#        ax.text(-500,-350,400,argv[2],color="#000000")
-#
-#        pyplot.savefig('{0:}-{1:}/traceback_{2:04d}_gagne.png'.format(method,mgpname,k), dpi=200)
-#        pyplot.clf()
-#        pyplot.close()
-#      
-#        print mgpmaster[k]
-
 if __name__ ==  "__main__":
-    traceback()
+   if len(sys.argv) == 0:
+      print "tracewing_mgp.py <inputfile> <group> <method> <minage> <maxage> <maxplotage>"
+   else:
+      traceback()
