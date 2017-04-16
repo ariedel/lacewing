@@ -1,5 +1,5 @@
 # lacewing
-Repository for the LACEwING moving group identification code (Riedel et al. in prep)
+Repository for the LACEwING moving group identification code (Riedel et al. 2017, 2017AJ....153...95R)
 
 LocAting Constituent mEmbers In Nearby Groups (LACEwING) is an astrophysics code that uses the kinematics (positions and motions) of stars to determine if they are members of one of the 13 nearby young moving groups and 3 nearby open clusters. It considers membership in:
 * epsilon Chameleontis
@@ -45,7 +45,7 @@ ellipse.py
 astrometry.py
 Moving_Groups_all.csv
 
-More detailed instructions can be found in Riedel et al. (in prep)
+More detailed instructions can be found in Riedel et al. (2017) 2017AJ....153...95R
 
 ----------------------------------------------------------------
 
