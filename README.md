@@ -25,6 +25,8 @@ The basic operation is simple:
 
 1. Prepare a .csv file with a header containing the name, RA, eRA, DEC, eDEC, pi, epi, rv, erv, pmra, epmra, pmdec, epmdec (the order does not matter) and fill in the columns with information about the stars of interest. Empty columns will be either ignored or errors estimated by the code.
 
+RA and DEC are in decimal degrees; eRA and eDEC are in milliarcseconds (eRA is eRA * cos(DEC)), pi and epi are in milliarcseconds, rv and erv are in kilometers per second; pmra, pmdec, epmra, and epmdec are in milliarcseconds per year (where pmra and epmra are actually pmra * cos(DEC))
+
 2. Run LACEwING:
 python lacewing.py (filename) [(young?) (outputfilename) (verboseoutput?)]
 
