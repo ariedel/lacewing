@@ -46,6 +46,9 @@ def traceback(argv=None):
     good_stars = [x for x in xrange(len(coord)) if ((pmra[x] is not None) & (pmdec[x] is not None) & (plx[x] is not None) & (rv[x] is not None))]
     n_stars = len(good_stars)
 
+    # Make directory for the moving group
+    os.mkdir(withmgp)
+
     for i in good_stars:
         #print name[i],coord[i].ra.degree,era[i],coord[i].dec.degree,edec[i],plx[i],eplx[i],pmra[i],epmra[i],pmdec[i],epmdec[i],rv[i],erv[i]
         print '({0:2d}) {1:16} {2:08.4f} {3:+07.4f} {4:6.2f} {5:+.4f} {6:+.4f} {7:+6.2f}'.format(i,name[i],coord[i].ra.degree,coord[i].dec.degree,1/plx[i],pmra[i],pmdec[i],rv[i])
