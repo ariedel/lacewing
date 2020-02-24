@@ -21,14 +21,14 @@ def isnumber(x):
         
     if type(x).__name__ in ["list","ndarray","Column","MaskedColumn"]:
         result=[]
-        for i in xrange(len(x)):
+        for i in range(len(x)):
             #print x[i]
             try:
                 if isinstance(x[i],numpy.ma.core.MaskedConstant):
                     raise ValueError
                 float(x[i])/2. # should induce non-numbers to throw a 'ValueError'
                 result.append(True)
-            except ValueError,TypeError:
+            except(ValueError,TypeError):
                 result.append(False)
     return result
 

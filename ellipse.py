@@ -296,15 +296,15 @@ def rotationtester():
 
     u,v,w,x,y,z = kinematics.gal_uvwxyz(ra=tra,dec=tdec,distance=tdist,pmra=tpmra,pmdec=tpmdec,vrad=trv)
     
-    print "Regular"
+    print("Regular")
     obj = fitellipse(x,y,z)
     rotmatrix = rotate(obj['xy'],obj['xz'],obj['yz'])
-    print rotmatrix
+    print(rotmatrix)
 
-    print "Gagne"
+    print("Gagne")
     obj2 = fitellipse_gagne(x,y,z)
     rotmatrix2 = rotate_gagne(obj2['xy'],obj2['xz'],obj2['yz'])
-    print rotmatrix2
+    print(rotmatrix2)
     
     # The rotation matrices are not the same, but if you rotate with one
     #  and derotate with the other, it's zero.
@@ -314,7 +314,7 @@ def rotationtester():
     
     derotate = np.dot(rotmatrix2.transpose(),rotated)
 
-    print derotate
-    print rotated
-    print [x,y,z]
-    print [x,y,z]-derotate
+    print(derotate)
+    print(rotated)
+    print([x,y,z])
+    print([x,y,z]-derotate)

@@ -97,9 +97,9 @@ def gal_uvwxyz(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None
    n_params = 3
    
    if n_params == 0:  
-      print 'Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD='
-      print '                  Distance=, PLX='
-      print '         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions'
+      print('Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD=')
+      print('                  Distance=, PLX=')
+      print('         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions')
       return None
    
    if ra is None or dec is None:  
@@ -207,10 +207,10 @@ def gal_tester():
       u,v,w,x,y,z = gal_uvwxyz(distance=pi1,ra=ra1,dec=dec1,pmra=pmra1,pmdec=pmdec1,vrad=vrad1)
       ra2,dec2,pi2,pmra2,pmdec2,vrad2 = gal_rdp(u,v,w,x,y,z)
 
-      print ra1,dec1,1/pi1,pmra1,pmdec1,vrad1
-      print ra2,dec2,pi2,pmra2,pmdec2,vrad2
-      print ra1-ra2,dec1-dec2,1/pi1-pi2,pmra1-pmra2,pmdec1-pmdec2,vrad1-vrad2
-      print 
+      print(ra1,dec1,1/pi1,pmra1,pmdec1,vrad1)
+      print(ra2,dec2,pi2,pmra2,pmdec2,vrad2)
+      print(ra1-ra2,dec1-dec2,1/pi1-pi2,pmra1-pmra2,pmdec1-pmdec2,vrad1-vrad2)
+      print() 
 
 def ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
    n_time = np.int(np.ceil(timespan/timestep))
@@ -221,7 +221,7 @@ def ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan
    pz = np.zeros((n_int,n_time))
    pc = []
    
-   for j in xrange(n_int):
+   for j in range(n_int):
       bra = ra + np.random.randn()*era
       bdec = dec + np.random.randn()*edec
       bdist = dist + np.random.randn()*edist
@@ -252,7 +252,7 @@ def epicyclic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan
    vos = 2*np.pi/85 # Vertical Oscillations
    kap = np.sqrt(-4*B*(A-B)) # planar epicyclic velocity
    
-   for j in xrange(n_int):
+   for j in range(n_int):
       bra = ra + (np.random.randn()*era)*np.cos(dec*np.pi/180.)
       bdec = dec + np.random.randn()*edec
       bdist = dist + np.random.randn()*edist
@@ -302,7 +302,7 @@ def ballistic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
    pz = np.zeros((n_int,n_time))
    pc = []
    
-   for j in xrange(n_int):
+   for j in range(n_int):
       bra = ra + random()*era
       bdec = dec + random()*edec
       bdist = dist + random()*edist
@@ -333,7 +333,7 @@ def epicyclic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
    vos = 2*np.pi/85 # Vertical Oscillations
    kap = np.sqrt(-4*B*(A-B)) # planar epicyclic velocity
    
-   for j in xrange(n_int):
+   for j in range(n_int):
       bra = ra + random()*era
       bdec = dec + random()*edec
       bdist = dist + random()*edist
