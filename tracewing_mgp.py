@@ -29,13 +29,14 @@ def traceback(argv=None):
         
     mgpname = argv[2]
     method = argv[3]
-    mgpage = np.float(argv[4])
-    mgpage2 = np.float(argv[5])
+    #If user gives positive values for ages assume they meant to give negative values
+    mgpage = -1*np.abs(np.float(argv[4]))
+    mgpage2 = -1*np.abs(np.float(argv[5]))
 
-    timespan = np.float(argv[6])
+    timespan = -1*np.abs(np.float(argv[6]))
     timestep = -0.1
     n_int = int(1000)
-    full_timespan = -800
+    full_timespan = -1*np.abs(np.float(argv[7])) #-800
    
     name,coord,era,edec,pmra,epmra,pmdec,epmdec,rv,erv,plx,eplx,note = lacewing.csv_loader(argv[1])
    
@@ -113,6 +114,7 @@ def traceback(argv=None):
     mgpmaster = []
     outfile = open("Moving_Group_{0:}_{1:}.dat".format(mgpname,method),"wb")
     outfile.write("Time X eX Y eY Z eZ A eA B eB C eC XY eXY XZ eXZ YZ eYZ\n")
+    print('Tracing back the stellar orbits...')
     for k in xrange(len(times)):
         objlist = []
         for j in xrange(n_int):
@@ -142,6 +144,8 @@ def traceback(argv=None):
         mgpmaster.append({'x':x,'ex':ex,'y':y,'ey':ey,'z':z,'ez':ez,'xy':xy,'exy':exy,'xz':xz,'exz':exz,'yz':yz,'eyz':eyz,'a':a,'ea':ea,'b':b,'eb':eb,'c':c,'ec':ec})
         #Output all the particulars of the moving group at this timestep T.
         outfile.write("{0:8.1f}     {1:12.3f} {2:12.3f}  {3:12.3f} {4:12.3f}  {5:12.3f} {6:12.3f}   {7:12.4f} {8:12.4f}  {9:12.4f} {10:12.4f}  {11:12.4f} {12:12.4f}   {13:12.4f} {14:12.4f}  {15:12.4f} {16:12.4f}  {17:12.4f} {18:12.4f}\n".format(times[k],mgpmaster[k]['x'],mgpmaster[k]['ex'],mgpmaster[k]['y'],mgpmaster[k]['ey'],mgpmaster[k]['z'],mgpmaster[k]['ez'],mgpmaster[k]['a'],mgpmaster[k]['ea'],mgpmaster[k]['b'],mgpmaster[k]['eb'],mgpmaster[k]['c'],mgpmaster[k]['ec'],mgpmaster[k]['xy'],mgpmaster[k]['exy'],mgpmaster[k]['xz'],mgpmaster[k]['exz'],mgpmaster[k]['yz'],mgpmaster[k]['eyz']))
+        #Progress report every 1 Myr
+        if (times[k]%1)==0: print('Stars traced back to '+str(times[k])+' Myr')
 
     outfile.close()
 
@@ -152,9 +156,9 @@ def traceback(argv=None):
     #####################################################
 
     # flatten by one dimension; we now have N*I stars at every time T.
-    mgp_x = np.reshape(mgp_x,(n_stars*n_int,np.ceil(full_timespan/timestep)))
-    mgp_y = np.reshape(mgp_y,(n_stars*n_int,np.ceil(full_timespan/timestep)))
-    mgp_z = np.reshape(mgp_z,(n_stars*n_int,np.ceil(full_timespan/timestep)))
+    mgp_x = np.reshape(mgp_x,(n_stars*n_int,int(np.ceil(full_timespan/timestep))))
+    mgp_y = np.reshape(mgp_y,(n_stars*n_int,int(np.ceil(full_timespan/timestep))))
+    mgp_z = np.reshape(mgp_z,(n_stars*n_int,int(np.ceil(full_timespan/timestep))))
     
     ## rotate so that each strip contains n_stars*n_int elements for a given time.
     ## (it's easier to plot)
@@ -239,6 +243,6 @@ def traceback(argv=None):
 
 if __name__ ==  "__main__":
    if len(sys.argv) == 0:
-      print "tracewing_mgp.py <inputfile> <group> <method> <minage> <maxage> <maxplotage>"
+      print "tracewing_mgp.py <inputfile> <group> <method> <minage> <maxage> <maxplotage> <maxsimage>"
    else:
       traceback()

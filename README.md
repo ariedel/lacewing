@@ -23,7 +23,7 @@ It is written for Python 2.7 and depends upon Numpy, Scipy, and Astropy modules.
 
 The basic operation is simple: 
 
-1. Prepare a .csv file with a header containing the name, RA, eRA, DEC, eDEC, pi, epi, rv, erv, pmra, epmra, pmdec, epmdec (the order does not matter) and fill in the columns with information about the stars of interest. Empty columns will be either ignored or errors estimated by the code.
+1. Prepare a .csv file with a header containing the Name, RA, eRA, DEC, eDEC, pi, epi, rv, erv, pmra, epmra, pmdec, epmdec (the order does not matter) and fill in the columns with information about the stars of interest. Empty columns will be either ignored or errors estimated by the code.
 
 RA and DEC are in decimal degrees; eRA and eDEC are in milliarcseconds (eRA is eRA * cos(DEC)), pi and epi are in milliarcseconds, rv and erv are in kilometers per second; pmra, pmdec, epmra, and epmdec are in milliarcseconds per year (where pmra and epmra are actually pmra * cos(DEC))
 
@@ -66,7 +66,7 @@ TRACEwING is an epicyclic traceback program that's designed to determine the dis
 The theory is that all the stars in a moving group formed in the same place at roughly the same time, so running the clock back should put a true member very close to the center of the moving group, at the time the moving group formed.
 
 Operation:
-python tracewing.py (inputfile) (group_to_fit) (method) (ending_timestep) (min_age_of_group) (max_age_of_group) (number_of_monte_carlo_iterations)
+python tracewing.py (inputfile) (group_to_fit) (method) (min_age_of_group) (max_age_of_group) (ending_timestep) (number_of_monte_carlo_iterations)
 
 Inputfile is a .csv file of the same format that LACEwING requires, which should contain kinematic information for all the stars you're interested in.
 
