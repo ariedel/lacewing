@@ -28,7 +28,7 @@ def isnumber(x):
                     raise ValueError
                 float(x[i])/2. # should induce non-numbers to throw a 'ValueError'
                 result.append(True)
-            except ValueError,TypeError:
+            except (ValueError,TypeError):
                 result.append(False)
     return result
 
@@ -65,7 +65,7 @@ def sixty(x):
 def ten(x):
     #x = [x]
     size = len(x)
-    #print size,x
+    #print(size,x)
     try:
         len(x[0])
         x = numpy.asarray(x)
@@ -88,7 +88,7 @@ def ten(x):
         if x[0] < 0:
             val = val * -1
 
-    #print val
+    #print(val)
     return val
 
 ###################################
@@ -164,7 +164,7 @@ def greatcircle(ra,dec,pmra,pmdec):
                                 # in cartesian coordinates.
    rar=ra/radeg
    decr=dec/radeg
-#    print ra,dec,rar,decr
+#    print(ra,dec,rar,decr)
    pmrar=pmra/3600./radeg
    pmdecr=pmdec/3600./radeg
    x1=numpy.cos(decr)*numpy.cos(rar)
@@ -173,8 +173,8 @@ def greatcircle(ra,dec,pmra,pmdec):
    x2=numpy.cos(decr+pmdecr)*numpy.cos(rar+pmrar/numpy.cos(decr))
    y2=numpy.cos(decr+pmdecr)*numpy.sin(rar+pmrar/numpy.cos(decr))
    z2=numpy.sin(decr+pmdecr)
-   #    print x1,y1,z1,sqrt(x1**2+y1**2+z1**2),x2,y2,z2,sqrt(x2**2+y2**2+z2**2)
-   #   print
+   #    print(x1,y1,z1,sqrt(x1**2+y1**2+z1**2),x2,y2,z2,sqrt(x2**2+y2**2+z2**2))
+   #   print()
 
     # the cross-product:
    x=y1*z2-z1*y2

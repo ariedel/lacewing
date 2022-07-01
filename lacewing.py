@@ -15,8 +15,8 @@ import ellipse
 ###############################################
 
 ###############################################
-### LACEwING 1.5
-### ARR 2016-07-05
+### LACEwING 3
+### ARR 2022-06-30
 ### 1.0: Everything
 ### 1.1: Removed dependence on GROUP columns in input data table
 ###      Fixed dependency on astrometry module
@@ -30,6 +30,7 @@ import ellipse
 ###      headers in the catalog
 ### 1.5: Now handles the case of multiple "field" populations correctly
 ###      and also different numbers/orders of groups
+### 3.0  Now compatible with Python 3
 ###############################################
 
 ######################################################
@@ -41,54 +42,54 @@ def moving_group_loader():
     class Mgp:
         def __init__(self,mgp):
             self.name = mgp["Name"]
-            self.U = np.float(mgp["U"])
-            self.A = np.float(mgp["A"])
-            self.V = np.float(mgp["V"])
-            self.B = np.float(mgp["B"])
-            self.W = np.float(mgp["W"])
-            self.C = np.float(mgp["C"])
-            self.UV = np.float(mgp["UV"])
-            self.UW = np.float(mgp["UW"])
-            self.VW = np.float(mgp["VW"])
-            self.X = np.float(mgp["X"])
-            self.D = np.float(mgp["D"])
-            self.Y = np.float(mgp["Y"])
-            self.E = np.float(mgp["E"])
-            self.Z = np.float(mgp["Z"])
-            self.F = np.float(mgp["F"])
-            self.XY = np.float(mgp["XY"])
-            self.XZ = np.float(mgp["XZ"])
-            self.YZ = np.float(mgp["YZ"])
+            self.U = float(mgp["U"])
+            self.A = float(mgp["A"])
+            self.V = float(mgp["V"])
+            self.B = float(mgp["B"])
+            self.W = float(mgp["W"])
+            self.C = float(mgp["C"])
+            self.UV = float(mgp["UV"])
+            self.UW = float(mgp["UW"])
+            self.VW = float(mgp["VW"])
+            self.X = float(mgp["X"])
+            self.D = float(mgp["D"])
+            self.Y = float(mgp["Y"])
+            self.E = float(mgp["E"])
+            self.Z = float(mgp["Z"])
+            self.F = float(mgp["F"])
+            self.XY = float(mgp["XY"])
+            self.XZ = float(mgp["XZ"])
+            self.YZ = float(mgp["YZ"])
 
-            self.A2 = np.float(mgp["A2"])
-            self.B2 = np.float(mgp["B2"])
-            self.C2 = np.float(mgp["C2"])
-            self.UV2 = np.float(mgp["UV2"])
-            self.UW2 = np.float(mgp["UW2"])
-            self.VW2 = np.float(mgp["VW2"])
-            self.D2 = np.float(mgp["D2"])
-            self.E2 = np.float(mgp["E2"])
-            self.F2 = np.float(mgp["F2"])
-            self.XY2 = np.float(mgp["XY2"])
-            self.XZ2 = np.float(mgp["XZ2"])
-            self.YZ2 = np.float(mgp["YZ2"])
+            self.A2 = float(mgp["A2"])
+            self.B2 = float(mgp["B2"])
+            self.C2 = float(mgp["C2"])
+            self.UV2 = float(mgp["UV2"])
+            self.UW2 = float(mgp["UW2"])
+            self.VW2 = float(mgp["VW2"])
+            self.D2 = float(mgp["D2"])
+            self.E2 = float(mgp["E2"])
+            self.F2 = float(mgp["F2"])
+            self.XY2 = float(mgp["XY2"])
+            self.XZ2 = float(mgp["XZ2"])
+            self.YZ2 = float(mgp["YZ2"])
 
             self.color = [mgp["Red"],mgp["Green"],mgp["Blue"]]
-            self.weightednumber = np.float(mgp["Weightednumber"])
-            self.uniform = np.int(mgp["uniform"])
+            self.weightednumber = float(mgp["Weightednumber"])
+            self.uniform = int(mgp["uniform"])
 
             self.coeff_all = [ [mgp['field_all_M'],mgp['field_all_S']],[mgp['field_pm_M'],mgp['field_pm_S']],[mgp['field_dist_M'],mgp['field_dist_S']],[mgp['field_rv_M'],mgp['field_rv_S']],[mgp['field_pmdist_M'],mgp['field_pmdist_S']],[mgp['field_pmrv_M'],mgp['field_pmrv_S']],[mgp['field_distrv_M'],mgp['field_distrv_S']]]
             self.coeff_young = [ [mgp['young_all_M'],mgp['young_all_S']],[mgp['young_pm_M'],mgp['young_pm_S']],[mgp['young_dist_M'],mgp['young_dist_S']],[mgp['young_rv_M'],mgp['young_rv_S']],[mgp['young_pmdist_M'],mgp['young_pmdist_S']],[mgp['young_pmrv_M'],mgp['young_pmrv_S']],[mgp['young_distrv_M'],mgp['young_distrv_S']]]
             for x in range(len(self.coeff_all)):
                 if astrometry.isnumber(self.coeff_all[x][0]):
-                    self.coeff_all[x][0] = np.float(self.coeff_all[x][0])
+                    self.coeff_all[x][0] = float(self.coeff_all[x][0])
                 if astrometry.isnumber(self.coeff_all[x][1]):
-                    self.coeff_all[x][1] = np.float(self.coeff_all[x][1])
+                    self.coeff_all[x][1] = float(self.coeff_all[x][1])
             for x in range(len(self.coeff_young)):
                 if astrometry.isnumber(self.coeff_young[x][0]):
-                    self.coeff_young[x][0] = np.float(self.coeff_young[x][0])
+                    self.coeff_young[x][0] = float(self.coeff_young[x][0])
                 if astrometry.isnumber(self.coeff_young[x][1]):
-                    self.coeff_young[x][1] = np.float(self.coeff_young[x][1])
+                    self.coeff_young[x][1] = float(self.coeff_young[x][1])
 
     # read in ellipse parameters for associations
 
@@ -210,24 +211,20 @@ def gauscdf(x,m,sigma):
 ## The Core LACEwING algorithm ##
 #################################
 
-def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,edec=None,pmra=None,epmra=None,pmdec=None,epmdec=None,plx=None,eplx=None,rv=None,erv=None):
+def lacewing(moving_groups,young=None,iterate=10000,ra=None,era=None,dec=None,edec=None,pmra=None,epmra=None,pmdec=None,epmdec=None,plx=None,eplx=None,rv=None,erv=None):
     if ra is None or dec is None:
         raise Exception('ERROR - You need at least an RA and a DEC for this to work')
-    if pmra is None or pmdec is None:
-        pmexists = 0
-    else:
-        pmexists = 1
-    if plx is None:
-        distexists = 0
-    else:
-        distexists = 1
-    if rv is None:
-        rvexists = 0
-    else:
-        rvexists = 1
-    if iterate is None:
-        iterate = 10000
-    #print iterate
+
+    pmexists = False
+    distexists = False
+    rvexists = False
+    if pmra is not None and pmdec is not None:
+        pmexists = True
+    if plx is not None:
+        distexists = True
+    if rv is not None:
+        rvexists = True
+    #print(iterate)
 
     output = []
 
@@ -260,7 +257,7 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
         # step 1: compare proper motions. We're going to rotate the star's proper motion 
         #  vectors (pmRA, pmDEC) by the angle of the association's proper motion, to 
         #  transform the motion into pm= and pm_|_.
-        if pmexists == 1:
+        if pmexists:
             # 1a. Calculate the parallel and perpendicular components of the proper motion
             #   First: compute a rotation matrix to transform pmRA,pmDEC into pm= and pm_|_
             cosa = np.cos(exp_pa*np.pi/180.0)
@@ -305,18 +302,18 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
 
             pos_ksig,pos_eksig,pos_ksep = spatial(mgp,ra,era,dec,edec,1/exp_dist,exp_edist/(exp_dist**2),iterate)
 
-        if (pmexists == 1) & (distexists == 0): # calculate the positional uncertainty for distance, but only use it if the distance does not exist. 
+        if pmexists and not distexists: # calculate the positional uncertainty for distance, but only use it if the distance does not exist. 
             sigma.append(pos_ksig)
             weight.append(1)
 
         # step 2: Distances exist. We can do the real test for spatial position.
-        if (distexists == 1):
+        if distexists:
             pos_sig,pos_esig,pos_sep = spatial(mgp,ra,era,dec,edec,plx,eplx,iterate)
             sigma.append(pos_sig)
             weight.append(1)
 
         # step 3: Distances AND proper motions exist. Now we can compute a kinematic distance error.
-        if (pmexists == 1) & (distexists == 1):
+        if pmexists and distexists:
             # 3a. use the kinematic distance calculated in step 1c, which should have already run if pmexists==1.
             dist_sig = np.abs(1/plx - exp_dist) / np.sqrt((eplx/plx**2)**2 + exp_edist**2)
             sigma.append(dist_sig)
@@ -324,39 +321,39 @@ def lacewing(moving_groups,young=None,iterate=None,ra=None,era=None,dec=None,ede
 
 
         # step 4: RVs exist. This is straightforward: We have an estimated RV from the convergence.
-        if (rvexists == 1):
+        if rvexists:
             rv_sig = np.abs(rv - exp_rv) / np.sqrt(erv**2 + exp_erv**2)
             sigma.append(rv_sig)
             weight.append(1)
 
         sig = weightadd(sigma,weight)
                         
-        #print sig
+        #print(sig)
         if young == "young":
             coeff = mgp.coeff_young
         else:
             coeff = mgp.coeff_all
 
-        #print coeff[0][0],astrometry.isnumber(coeff[0][0])
-        if pmexists == 1:
-            if distexists == 1:
-                if rvexists == 1:
+        #print(coeff[0][0],astrometry.isnumber(coeff[0][0]))
+        if pmexists:
+            if distexists:
+                if rvexists:
                     percent = gauscdf(sig,coeff[0][0],coeff[0][1])
                 else:
                     percent = gauscdf(sig,coeff[4][0],coeff[4][1])
             else:
-                if rvexists == 1:
+                if rvexists:
                     percent = gauscdf(sig,coeff[5][0],coeff[5][1])
                 else:
                     percent = gauscdf(sig,coeff[1][0],coeff[1][1])
         else:
-            if distexists == 1:
-                if rvexists == 1:
+            if distexists:
+                if rvexists:
                     percent = gauscdf(sig,coeff[6][0],coeff[6][1])
                 else:
                     percent = gauscdf(sig,coeff[2][0],coeff[2][1])
             else:
-                if rvexists == 1:
+                if rvexists:
                     percent = gauscdf(sig,coeff[3][0],coeff[3][1])
                 else:
                     percent = 0
@@ -400,10 +397,10 @@ def csv_loader(infilename):
     known = ['Name','RA','DEC','RAdeg','DEdeg','eRA', 'eDEC', 'e_RAdeg', 'e_DEdeg', 'RAh','RAm','RAs','DE-','DEd','DEm','DEs','eRA','eDEC','pmRA','epmRA','pmDEC','epmDEC','e_pmRA','pmDE','e_pmDE','pmra','epmra','pmdec','epmdec','pi','epi','plx','e_plx','rv','erv','HRV','e_HRV','Note']
     # compare list of recognizeable names to star.keys()
     recognized = [k for k in known if k in star.keys()]
-    print "Recognized Columns: ",
+    print("Recognized Columns: ", end=" ")
     for key in recognized:
-        print key,
-    print
+        print(key, end=" ")
+    print()
     
     for i in np.arange(0,len(star)):
        
@@ -419,12 +416,12 @@ def csv_loader(infilename):
         coord.append(tcoord)
 
         try:
-            tera = np.float(star[i]['eRA'])/1000./3600.
-            tedec = np.float(star[i]['eDEC'])/1000./3600.
+            tera = float(star[i]['eRA'])/1000./3600.
+            tedec = float(star[i]['eDEC'])/1000./3600.
         except (ValueError,IndexError,KeyError):
             try:
-                tera = np.float(star[i]['e_RAdeg'])/1000./3600.
-                tedec = np.float(star[i]['e_DEdeg'])/1000./3600.
+                tera = float(star[i]['e_RAdeg'])/1000./3600.
+                tedec = float(star[i]['e_DEdeg'])/1000./3600.
             except (ValueError,IndexError,KeyError):
                 tera = 1.0/3600.
                 tedec = 1.0/3600.
@@ -433,28 +430,28 @@ def csv_loader(infilename):
         edec.append(tedec)
     
         try:
-            tpmra = np.float(star[i]['pmRA'])/1000.
-            tepmra = np.float(star[i]['epmRA'])/1000.
-            tpmdec = np.float(star[i]['pmDEC'])/1000.
-            tepmdec = np.float(star[i]['epmDEC'])/1000.
+            tpmra = float(star[i]['pmRA'])/1000.
+            tepmra = float(star[i]['epmRA'])/1000.
+            tpmdec = float(star[i]['pmDEC'])/1000.
+            tepmdec = float(star[i]['epmDEC'])/1000.
         except (ValueError,IndexError,KeyError):
             try:
-                tpmra = np.float(star[i]['pmRA'])/1000.
-                tepmra = np.float(star[i]['e_pmRA'])/1000.
-                tpmdec = np.float(star[i]['pmDE'])/1000.
-                tepmdec = np.float(star[i]['e_pmDE'])/1000.
+                tpmra = float(star[i]['pmRA'])/1000.
+                tepmra = float(star[i]['e_pmRA'])/1000.
+                tpmdec = float(star[i]['pmDE'])/1000.
+                tepmdec = float(star[i]['e_pmDE'])/1000.
             except (ValueError,IndexError,KeyError):
                 try:
-                    tpmra = np.float(star[i]['pmra'])/1000.
-                    tepmra = np.float(star[i]['epmra'])/1000.
-                    tpmdec = np.float(star[i]['pmdec'])/1000.
-                    tepmdec = np.float(star[i]['epmdec'])/1000.
+                    tpmra = float(star[i]['pmra'])/1000.
+                    tepmra = float(star[i]['epmra'])/1000.
+                    tpmdec = float(star[i]['pmdec'])/1000.
+                    tepmdec = float(star[i]['epmdec'])/1000.
                 except (ValueError,IndexError,KeyError):
 
                     try:
-                        tpmra = np.float(star[i]['pmRA'])/1000.
+                        tpmra = float(star[i]['pmRA'])/1000.
                         tepmra = 0.01
-                        tpmdec = np.float(star[i]['pmDEC'])/1000.
+                        tpmdec = float(star[i]['pmDEC'])/1000.
                         tepmdec = 0.01
                     except (ValueError,IndexError,KeyError):
                         tpmra = None
@@ -468,12 +465,12 @@ def csv_loader(infilename):
         epmdec.append(tepmdec)
     
         try:
-            tplx = np.float(star[i]['pi'])/1000.
-            teplx = np.float(star[i]['epi'])/1000.
+            tplx = float(star[i]['pi'])/1000.
+            teplx = float(star[i]['epi'])/1000.
         except (ValueError, IndexError,KeyError):
             try:
-                tplx = np.float(star[i]['plx'])/1000.
-                teplx = np.float(star[i]['e_plx'])/1000.
+                tplx = float(star[i]['plx'])/1000.
+                teplx = float(star[i]['e_plx'])/1000.
             except (ValueError, IndexError,KeyError):
                 tplx = None
                 teplx = None
@@ -482,12 +479,12 @@ def csv_loader(infilename):
         eplx.append(teplx)
 
         try:
-            trv = np.float(star[i]['rv'])
-            terv = np.float(star[i]['erv'])
+            trv = float(star[i]['rv'])
+            terv = float(star[i]['erv'])
         except (ValueError, IndexError,KeyError):
             try:
-                trv = np.float(star[i]['HRV'])
-                terv = np.float(star[i]['e_HRV'])
+                trv = float(star[i]['HRV'])
+                terv = float(star[i]['e_HRV'])
             except (ValueError, IndexError,KeyError):
                 trv = None
                 terv = None
@@ -508,7 +505,7 @@ if __name__ == "__main__":
     try:
         infilename = argv[1]
     except IndexError: 
-        print 'syntax: python lacewing.py inputfile [young] [outfilename] [verbose] [g.o.f.]'
+        print('syntax: python lacewing.py inputfile [young] [outfilename] [verbose] [g.o.f.]')
     try:
         young = argv[2]
     except IndexError:
@@ -534,7 +531,7 @@ if __name__ == "__main__":
 
     moving_groups = [moving_groups[x] for x in range(len(moving_groups)) if moving_groups[x].name != "Field"]
 
-    outfile = open(outfilename,'wb')
+    outfile = open(outfilename,'w')
     if verbose == "verbose":
         # verbose output is one line per moving group per entry (1 line per group per star) in CSV format
         outfile.write('lineno,Name,RA,DEC,Group,d1,Probability,d2,sig_pm,kin_pmra,kin_epmra,kin_pmdec,kin_epmdec,pmra,epmra,pmdec,epmdec,d3,sig_dist,kin_dist,kin_edist,dist,edist,d4,sig_rv,kin_rv,kin_erv,rv,erv,d5,sig_pos,sep,Note,.\n')
@@ -598,4 +595,3 @@ if __name__ == "__main__":
             outfile.write('\n')
 
     outfile.close()
-

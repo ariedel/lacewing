@@ -97,9 +97,9 @@ def gal_uvwxyz(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None
    n_params = 3
    
    if n_params == 0:  
-      print 'Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD='
-      print '                  Distance=, PLX='
-      print '         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions'
+      print('Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD=')
+      print('                  Distance=, PLX=')
+      print('         U, V, W, X, Y, Z - output Galactic space velocities (km/s) and positions')
       return None
    
    if ra is None or dec is None:  
@@ -207,10 +207,10 @@ def gal_tester():
       u,v,w,x,y,z = gal_uvwxyz(distance=pi1,ra=ra1,dec=dec1,pmra=pmra1,pmdec=pmdec1,vrad=vrad1)
       ra2,dec2,pi2,pmra2,pmdec2,vrad2 = gal_rdp(u,v,w,x,y,z)
 
-      print ra1,dec1,1/pi1,pmra1,pmdec1,vrad1
-      print ra2,dec2,pi2,pmra2,pmdec2,vrad2
-      print ra1-ra2,dec1-dec2,1/pi1-pi2,pmra1-pmra2,pmdec1-pmdec2,vrad1-vrad2
-      print 
+      print(ra1,dec1,1/pi1,pmra1,pmdec1,vrad1)
+      print(ra2,dec2,pi2,pmra2,pmdec2,vrad2)
+      print(ra1-ra2,dec1-dec2,1/pi1-pi2,pmra1-pmra2,pmdec1-pmdec2,vrad1-vrad2)
+      print()
 
 def ballistic(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,timespan,timestep,n_int):
    n_time = np.int(np.ceil(timespan/timestep))
@@ -371,5 +371,3 @@ def epicyclic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
 #      orbitresult = orbit.getorbit()
 #
 #   return px,py,pz
-
-
