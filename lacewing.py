@@ -30,6 +30,7 @@ import ellipse
 ###      headers in the catalog
 ### 1.5: Now handles the case of multiple "field" populations correctly
 ###      and also different numbers/orders of groups
+### 3.0: Python 3 compatible
 ###############################################
 
 ######################################################
@@ -190,6 +191,7 @@ def spatial(mgp,ra,era,dec,edec,pi,epi,n_init):
    esigma = np.std(sigmas,ddof=1)
 
    return sigma,esigma,dist
+
 
 def weightadd(sigma,weight):
    sig = 0
@@ -400,10 +402,10 @@ def csv_loader(infilename):
     known = ['Name','RA','DEC','RAdeg','DEdeg','eRA', 'eDEC', 'e_RAdeg', 'e_DEdeg', 'RAh','RAm','RAs','DE-','DEd','DEm','DEs','eRA','eDEC','pmRA','epmRA','pmDEC','epmDEC','e_pmRA','pmDE','e_pmDE','pmra','epmra','pmdec','epmdec','pi','epi','plx','e_plx','rv','erv','HRV','e_HRV','Note']
     # compare list of recognizeable names to star.keys()
     recognized = [k for k in known if k in star.keys()]
-    print "Recognized Columns: ",
+    print("Recognized Columns: ", end="")
     for key in recognized:
-        print key,
-    print
+        print(key, end="")
+    print()
     
     for i in np.arange(0,len(star)):
        
@@ -508,7 +510,7 @@ if __name__ == "__main__":
     try:
         infilename = argv[1]
     except IndexError: 
-        print 'syntax: python lacewing.py inputfile [young] [outfilename] [verbose] [g.o.f.]'
+        print('syntax: python lacewing.py inputfile [young] [outfilename] [verbose] [g.o.f.]')
     try:
         young = argv[2]
     except IndexError:
@@ -598,4 +600,3 @@ if __name__ == "__main__":
             outfile.write('\n')
 
     outfile.close()
-

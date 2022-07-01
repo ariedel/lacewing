@@ -1,4 +1,5 @@
 import numpy as np
+from astropy import units as u
 #import galpy
 #from scipy import weave
 
@@ -22,6 +23,12 @@ import numpy as np
 # AR 2013.0910: Fixed this script to run with vectors.  Mostly, I put back pieces of 
 # http://code.google.com/p/astrolibpy/source/browse/astrolib/gal_uvw.py
 # from whence the original translation comes.
+
+K = 4.74047*u.mas     #Equivalent of 1 A.U/yr in km/s  
+A_G = np.array([[-0.0548755604, +0.4941094279, -0.8676661490],
+               [-0.8734370902, -0.4448296300, -0.1980763734],
+               [-0.4838350155, 0.7469822445, +0.4559837762]]) # rotation matrix for J2000 -->Galactic
+
 def gal_uvwxyz(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None, vrad=None, plx=None):
    """
     NAME:
@@ -117,29 +124,27 @@ def gal_uvwxyz(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None
    sind = np.sin(dec*np.pi/180.)
    cosa = np.cos(ra*np.pi/180.)
    sina = np.sin(ra*np.pi/180.)
-   
-   k = 4.74047     #Equivalent of 1 A.U/yr in km/s  
-   a_g = np.array([[-0.0548755604, +0.4941094279, -0.8676661490],
-                [-0.8734370902, -0.4448296300, -0.1980763734],
-                [-0.4838350155, 0.7469822445, +0.4559837762]]) # rotation matrix for J2000 -->Galactic
+   print(cosd,sind,cosa,sina)
+
    pos1 = cosd*cosa
    pos2 = cosd*sina
    pos3 = sind
 
    #AR 2013.0910: In order to use this with vectors, we need more control over the matrix multiplication
 
-   x = 1/plx * (a_g[0,0] * pos1 + a_g[1,0] * pos2 + a_g[2,0] * pos3)
-   y = 1/plx * (a_g[0,1] * pos1 + a_g[1,1] * pos2 + a_g[2,1] * pos3)
-   z = 1/plx * (a_g[0,2] * pos1 + a_g[1,2] * pos2 + a_g[2,2] * pos3)
+   x = 1/plx * (A_G[0,0] * pos1 + A_G[1,0] * pos2 + A_G[2,0] * pos3)
+   y = 1/plx * (A_G[0,1] * pos1 + A_G[1,1] * pos2 + A_G[2,1] * pos3)
+   z = 1/plx * (A_G[0,2] * pos1 + A_G[1,2] * pos2 + A_G[2,2] * pos3)
 
    vec1 = vrad
-   vec2 = k * pmra / plx
-   vec3 = k * pmdec / plx
+   vec2 = K * pmra / plx
+   vec3 = K * pmdec / plx
+   print(vec1,vec2,vec3)
 
    #AR 2013.0910: In order to use this with vectors, we need more control over the matrix multiplication
-   u = (a_g[0,0] * cosa * cosd + a_g[1,0] * sina * cosd + a_g[2,0] * sind) * vec1 + (-a_g[0,0] * sina + a_g[1,0] * cosa) * vec2 + (-a_g[0,0] * cosa * sind - a_g[1,0] * sina * sind + a_g[2,0] * cosd) * vec3
-   v = (a_g[0,1] * cosa * cosd + a_g[1,1] * sina * cosd + a_g[2,1] * sind) * vec1 + (-a_g[0,1] * sina + a_g[1,1] * cosa) * vec2 + (-a_g[0,1] * cosa * sind - a_g[1,1] * sina * sind + a_g[2,1] * cosd) * vec3
-   w = (a_g[0,2] * cosa * cosd + a_g[1,2] * sina * cosd + a_g[2,2] * sind) * vec1 + (-a_g[0,2] * sina + a_g[1,2] * cosa) * vec2 + (-a_g[0,2] * cosa * sind - a_g[1,2] * sina * sind + a_g[2,2] * cosd) * vec3
+   u = (A_G[0,0] * cosa * cosd + A_G[1,0] * sina * cosd + A_G[2,0] * sind) * vec1 + (-A_G[0,0] * sina + A_G[1,0] * cosa) * vec2 + (-A_G[0,0] * cosa * sind - A_G[1,0] * sina * sind + A_G[2,0] * cosd) * vec3
+   v = (A_G[0,1] * cosa * cosd + A_G[1,1] * sina * cosd + A_G[2,1] * sind) * vec1 + (-A_G[0,1] * sina + A_G[1,1] * cosa) * vec2 + (-A_G[0,1] * cosa * sind - A_G[1,1] * sina * sind + A_G[2,1] * cosd) * vec3
+   w = (A_G[0,2] * cosa * cosd + A_G[1,2] * sina * cosd + A_G[2,2] * sind) * vec1 + (-A_G[0,2] * sina + A_G[1,2] * cosa) * vec2 + (-A_G[0,2] * cosa * sind - A_G[1,2] * sina * sind + A_G[2,2] * cosd) * vec3
 
    lsr_vel = np.array([8.5, 13.38, 6.49])
    if (lsr is not None):  
@@ -151,17 +156,12 @@ def gal_uvwxyz(distance=None, lsr=None, ra=None, dec=None, pmra=None, pmdec=None
 
 def gal_rdp(u,v,w,x,y,z):
 
-   # conversion between galactic and equatorial coordinates
-   k = 4.74047     #Equivalent of 1 A.U/yr in km/s  
-   a_g = np.array([[-0.0548755604, -0.8734370902,-0.4838350155],
-                [+0.4941094279, -0.4448296300, 0.7469822445],
-                [-0.8676661490, -0.1980763734, +0.4559837762]]) # rotation matrix for Galactic-->J2000
    radeg = 180/np.pi
 
    #AR 2014.0123: First, rotate galactic xyz back to equatorial xyz
-   pos1 = (a_g[0,0] * x + a_g[1,0] * y + a_g[2,0] * z)
-   pos2 = (a_g[0,1] * x + a_g[1,1] * y + a_g[2,1] * z)
-   pos3 = (a_g[0,2] * x + a_g[1,2] * y + a_g[2,2] * z)
+   pos1 = (A_G[0,0] * x + A_G[1,0] * y + A_G[2,0] * z)
+   pos2 = (A_G[0,1] * x + A_G[1,1] * y + A_G[2,1] * z)
+   pos3 = (A_G[0,2] * x + A_G[1,2] * y + A_G[2,2] * z)
 
    dist = np.sqrt(pos1**2 + pos2**2 + pos3**2)
    ra = np.arctan2(pos2,pos1)*radeg
@@ -182,7 +182,7 @@ def gal_rdp(u,v,w,x,y,z):
                        [sina*cosd,cosa,-sina*sind],
                        [sind,0,cosd] ]) # rotation matrix for cartesian to spherical
 
-   b = np.dot(a_g,a_c)
+   b = np.dot(A_G,a_c)
    #vec = np.dot(vec,b)
 
    vec1 = (b[0,0] * u + b[1,0] * v + b[2,0] * w)
@@ -190,8 +190,8 @@ def gal_rdp(u,v,w,x,y,z):
    vec3 = (b[0,2] * u + b[1,2] * v + b[2,2] * w)
 
    vrad = vec1
-   pmra = vec2 / (k * dist)
-   pmdec = vec3 / (k * dist)
+   pmra = vec2 / (K * dist)
+   pmdec = vec3 / (K * dist)
 
    return ra,dec,dist,pmra,pmdec,vrad
 
@@ -371,5 +371,3 @@ def epicyclic_uniform(ra,era,dec,edec,dist,edist,pmra,epmra,pmdec,epmdec,rv,erv,
 #      orbitresult = orbit.getorbit()
 #
 #   return px,py,pz
-
-

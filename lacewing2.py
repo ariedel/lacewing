@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from astropy.coordinates import SkyCoord
-from astropy import units as u 
+from astropy import units
 from sys import argv
 import kinematics
 import astrometry
@@ -41,18 +41,18 @@ R_GAL = np.array([[-0.0548755604, -0.8734370902,-0.4838350155],
             [-0.8676661490, -0.1980763734, +0.4559837762]]) # rotation matrix for Galactic-->J2000
 dataformat = [
     {'name': 'name', 'quant': 1, 'default': 'name', 'forcalc': None, 'keys': ['name', 'source', 'id', 'target']},
-    {'name': 'ra', 'quant': u.deg, 'default': "has_coord", 'forcalc': u.deg, 'keys': ['raj2000', 'radeg', 'ra', 'ra_icrs', 'alpha', 'r.a.']},
-    {'name': 'dec', 'quant': u.deg, 'default': "has_coord", 'forcalc': u.deg, 'keys': ['dej2000', 'dec', 'dedeg', 'decdeg', 'decj2000', 'de_icrs', 'delta', 'decl.']},
-    {'name': 'era', 'quant': u.mas, 'default': 1/3600*u.deg, 'forcalc': u.deg, 'keys': ['e_raj2000', 'era', "e_ra", "e_radeg", "e_ra_icrs", "e_alpha", "ura", "u_ra", "u_radeg", "u_raj2000", "u_alpha"]},
-    {'name': 'edec', 'quant': u.mas, 'default': 1/3600*u.deg, 'forcalc': u.deg, 'keys': ['e_dej2000', 'edec', "e_dec", "e_dedeg", "e_decdeg", "e_dec_icrs", "e_decj2000", "e_de_icrs", "e_delta", "udec", "u_dec", "u_dedeg", "u_dej2000", "u_de_icrs", "u_decdeg", "u_decj2000", "u_dec_icrs", "u_delta"]},
-    {'name': 'pmra', 'quant': u.mas/u.yr, 'default': "has_pm", 'forcalc': u.arcsec/u.yr, 'keys': ['pmra', "pm_ra", "pm_ra_cos_dec", "pm_alpha", "mu_a", "mu_alpha", "mu_alpha_cos_delta", "mu_ra"]},
-    {'name': 'pmdec', 'quant': u.mas/u.yr, 'default': "has_pm", 'forcalc': u.arcsec/u.yr, 'keys': ['pmdec', "pm_dec", "pmde", "pm_de", "pm_delta", "mu_d", "mu_delta", "mu_dec", "mu_de"]},
-    {'name': 'epmra', 'quant': u.mas/u.yr, 'default': 0.001*u.arcsec/u.yr, 'forcalc': u.arcsec/u.yr, 'keys': ['epmra', "e_pmra", "e_pm_ra", "e_pm_ra_cos_dec", "e_pm_alpha", "e_mu_a", "e_mu_a_cos_d", "e_mu_alpha", "e_mu_alpha_cos_delta", "e_mu_ra"]},
-    {'name': 'epmdec', 'quant': u.mas/u.yr, 'default': 0.001*u.arcsec/u.yr, 'forcalc': u.arcsec/u.yr, 'keys': ['epmdec', "e_pmdec", "e_pm_dec", "e_pmde", "e_pm_de", "e_pm_delta", "e_mu_d", "e_mu_delta", "e_mu_dec", "e_mu_de", "u_pmdec", "u_pm_dec", "u_pm_de", "u_pm_delta", "u_mu_d", "u_mu_delta", "u_mu_dec", "u_mu_de"]},
-    {'name': 'plx', 'quant': u.mas, 'default': "has_plx", 'forcalc': u.arcsec, 'keys': ['pi', 'plx']},
-    {'name': 'eplx', 'quant': u.mas, 'default': 0.001*u.arcsec, 'forcalc': u.arcsec, 'keys': ['epi', 'eplx', 'e_pi', 'e_plx', 'u_plx', 'u_plx']},
-    {'name': 'rv', 'quant': u.km/u.s, 'default': "has_rv", 'forcalc': u.km/u.s, 'keys': ['hrv', 'rv', 'r.v.', 'vrad']},
-    {'name': 'erv', 'quant': u.km/u.s, 'default': 1*u.km/u.s, 'forcalc': u.km/u.s, 'keys': ['e_hrv', 'erv', 'e_rv', 'e_r.v.', 'e_vrad', 'u_hrv', 'urv', 'u_rv', 'u_r.v.', 'u_vrad']},
+    {'name': 'ra', 'quant': units.deg, 'default': "has_coord", 'forcalc': units.deg, 'keys': ['raj2000', 'radeg', 'ra', 'ra_icrs', 'alpha', 'r.a.']},
+    {'name': 'dec', 'quant': units.deg, 'default': "has_coord", 'forcalc': units.deg, 'keys': ['dej2000', 'dec', 'dedeg', 'decdeg', 'decj2000', 'de_icrs', 'delta', 'decl.']},
+    {'name': 'era', 'quant': units.mas, 'default': 1/3600*units.deg, 'forcalc': units.deg, 'keys': ['e_raj2000', 'era', "e_ra", "e_radeg", "e_ra_icrs", "e_alpha", "ura", "u_ra", "u_radeg", "u_raj2000", "u_alpha"]},
+    {'name': 'edec', 'quant': units.mas, 'default': 1/3600*units.deg, 'forcalc': units.deg, 'keys': ['e_dej2000', 'edec', "e_dec", "e_dedeg", "e_decdeg", "e_dec_icrs", "e_decj2000", "e_de_icrs", "e_delta", "udec", "u_dec", "u_dedeg", "u_dej2000", "u_de_icrs", "u_decdeg", "u_decj2000", "u_dec_icrs", "u_delta"]},
+    {'name': 'pmra', 'quant': units.mas/units.yr, 'default': "has_pm", 'forcalc': units.arcsec/units.yr, 'keys': ['pmra', "pm_ra", "pm_ra_cos_dec", "pm_alpha", "mu_a", "mu_alpha", "mu_alpha_cos_delta", "mu_ra"]},
+    {'name': 'pmdec', 'quant': units.mas/units.yr, 'default': "has_pm", 'forcalc': units.arcsec/units.yr, 'keys': ['pmdec', "pm_dec", "pmde", "pm_de", "pm_delta", "mu_d", "mu_delta", "mu_dec", "mu_de"]},
+    {'name': 'epmra', 'quant': units.mas/units.yr, 'default': 0.001*units.arcsec/units.yr, 'forcalc': units.arcsec/units.yr, 'keys': ['epmra', "e_pmra", "e_pm_ra", "e_pm_ra_cos_dec", "e_pm_alpha", "e_mu_a", "e_mu_a_cos_d", "e_mu_alpha", "e_mu_alpha_cos_delta", "e_mu_ra"]},
+    {'name': 'epmdec', 'quant': units.mas/units.yr, 'default': 0.001*units.arcsec/units.yr, 'forcalc': units.arcsec/units.yr, 'keys': ['epmdec', "e_pmdec", "e_pm_dec", "e_pmde", "e_pm_de", "e_pm_delta", "e_mu_d", "e_mu_delta", "e_mu_dec", "e_mu_de", "u_pmdec", "u_pm_dec", "u_pm_de", "u_pm_delta", "u_mu_d", "u_mu_delta", "u_mu_dec", "u_mu_de"]},
+    {'name': 'plx', 'quant': units.mas, 'default': "has_plx", 'forcalc': units.arcsec, 'keys': ['pi', 'plx']},
+    {'name': 'eplx', 'quant': units.mas, 'default': 0.001*units.arcsec, 'forcalc': units.arcsec, 'keys': ['epi', 'eplx', 'e_pi', 'e_plx', 'u_plx', 'u_plx']},
+    {'name': 'rv', 'quant': units.km/units.s, 'default': "has_rv", 'forcalc': units.km/units.s, 'keys': ['hrv', 'rv', 'r.v.', 'vrad']},
+    {'name': 'erv', 'quant': units.km/units.s, 'default': 1*units.km/units.s, 'forcalc': units.km/units.s, 'keys': ['e_hrv', 'erv', 'e_rv', 'e_r.v.', 'e_vrad', 'u_hrv', 'urv', 'u_rv', 'u_r.v.', 'u_vrad']},
     {'name': 'note', 'quant': 1, 'default': "note", 'forcalc': None, 'keys': ['note', "comment"]}
 ]
 
@@ -121,7 +121,7 @@ class StarClass:
         for item in dataformat:
             if item['name'] in stardata:
                 print(type(stardata[item['name']]), stardata[item['name']])
-                if type(stardata[item['name']]) == u.Quantity:
+                if type(stardata[item['name']]) == units.Quantity:
                     if stardata[item['name']].value != np.nan:
                         setattr(self, item['name'], stardata[item['name']])
                     else:
@@ -141,7 +141,7 @@ class StarClass:
 
     def _fill_default(self, stardata, item):
         # if the item is unlisted and default is a quantity, set the attribute to the default
-        if type(item['default']) == u.Quantity:
+        if type(item['default']) == units.Quantity:
             setattr(self, item['name'], item['default'].value)
         elif item['forcalc'] == None:
             setattr(self, item['name'], "")
@@ -165,12 +165,17 @@ class StarClass:
         self.b = np.dot(R_GAL,a_c)
 
         
-    def xyz(self, parallax, eparallax=0.001*u.arcsec):
+    def xyz(self, parallax, eparallax=0.001*units.arcsec):
         # first, get the XYZ position
         tdec = self.dec + np.random.randn(self.n_iter) * self.edec
         tra = self.ra + (np.random.randn(self.n_iter) * self.era) * np.cos(np.deg2rad(tdec))
         tplx = parallax + np.random.randn(self.n_iter) * eparallax
-        u,v,w,self.x,self.y,self.z = kinematics.gal_uvwxyz(ra=tra,dec=tdec,plx=tplx,pmra=np.zeros_like(tra),pmdec=np.zeros_like(tra),vrad=np.zeros_like(tra))
+
+        print(tra.unit,tdec.unit,tplx.unit)
+        u,v,w,self.x,self.y,self.z = kinematics.gal_uvwxyz(ra=tra, dec=tdec, plx=tplx, 
+                                                           pmra=np.zeros(len(tra))*units.arcsecond/units.year,
+                                                           pmdec=np.zeros(len(tra))*units.arcsecond/units.year,
+                                                           vrad=np.zeros(len(tra))*units.km/units.second)
 
 class LACEwING:
     def __init__(self, config, iterate, young):
@@ -410,12 +415,12 @@ def csv_loader(filename):
             ra = []
             dec = []
             for x in range(len(datatable["RAh"])):
-                coord = SkyCoord("{} {} {}".format(datatable['RAh'],datatable['RAm'],datatable['RAs']), "{}{} {} {}".format(datatable['DECs'],datatable['DECd'],datatable['DECm'],datatable['DECs']), units=[u.hourangle, u.degree])
+                coord = SkyCoord("{} {} {}".format(datatable['RAh'],datatable['RAm'],datatable['RAs']), "{}{} {} {}".format(datatable['DECs'],datatable['DECd'],datatable['DECm'],datatable['DECs']), units=[units.hourangle, units.degree])
                 ra.append(coord.icrs.ra.deg)
                 dec.append(coord.icrs.dec.deg)
 
-            datatable["ra"] = ra * u.deg
-            datatable["dec"] = dec * u.deg
+            datatable["ra"] = ra * units.deg
+            datatable["dec"] = dec * units.deg
             recognized.append("rah")
             recognized.append("decd")
     # if we've gone through all of this and not found a parallax, check for distance

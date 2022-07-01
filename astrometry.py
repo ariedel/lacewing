@@ -1,4 +1,5 @@
 import numpy
+from astropy import units as u
 
 # Weighted Standard Devation taken from http://stackoverflow.com/questions/2413522/weighted-standard-deviation-in-numpy
 def wstddev(x,u):
@@ -104,6 +105,7 @@ def pmjoin(pmra,epmra,pmdec,epmdec):
         pa = 360 + pa
         
     epa = abs(pa - numpy.arctan2(pmra-epmra,pmdec-epmdec)*180./numpy.pi)
+    print(epa)
     if epa > 180:
         epa = 360-epa
 
